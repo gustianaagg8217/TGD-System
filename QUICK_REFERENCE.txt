@@ -1,0 +1,181 @@
+╔════════════════════════════════════════════════════════════════════╗
+║                  TGd SYSTEM - QUICK START GUIDE                    ║
+║                      Panduan Cepat Launcher                        ║
+╚════════════════════════════════════════════════════════════════════╝
+
+┌────────────────────────────────────────────────────────────────────┐
+│ PILIHAN LAUNCHER (CHOOSE ONE):                                    │
+└────────────────────────────────────────────────────────────────────┘
+
+1. 🚀 RECOMMENDED: START_ALL.bat
+   📍 Lokasi: D:\TDd_System\START_ALL.bat
+   ⚡ Cara: Double-click file
+   ✓ Simple, clean, recommended
+   ✓ Menampilkan 2 window (backend & frontend)
+   ✓ Auto-open browser
+
+2. 🔇 SILENT: START_SILENT.vbs  
+   📍 Lokasi: D:\TDd_System\START_SILENT.vbs
+   ⚡ Cara: Double-click file
+   ✓ Tidak ada window command terlihat
+   ✓ Lebih clean di taskbar
+   ⚠ Harder to see error messages
+
+3. 📊 ADVANCED: START_ALL_ADVANCED.bat
+   📍 Lokasi: D:\TDd_System\START_ALL_ADVANCED.bat
+   ⚡ Cara: Double-click file
+   ✓ Includes logging
+   ✓ Better error handling
+   ✓ Creates log files in /logs folder
+
+┌────────────────────────────────────────────────────────────────────┐
+│ AKSES SERVICES:                                                   │
+└────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ INTERFACE PENGGUNA                  │
+│ URL: http://localhost:5173          │
+│ Buka di browser setelah launcher    │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ API DOKUMENTASI                     │
+│ URL: http://localhost:8000/docs     │
+│ Swagger UI untuk test API endpoints  │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ HEALTH CHECK                        │
+│ URL: http://localhost:8000/health   │
+│ Status endpoint untuk monitoring     │
+└─────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────────┐
+│ LOGIN CREDENTIALS:                                                │
+└────────────────────────────────────────────────────────────────────┘
+
+👤 ADMIN (Full Access)
+   Email:    admin@tgd.com
+   Password: admin@123456
+
+👤 ENGINEER (Edit Rights)
+   Email:    engineer@tgd.com
+   Password: eng@123456
+
+👤 VIEWER (Read-Only)
+   Email:    viewer@tgd.com
+   Password: view@123456
+
+┌────────────────────────────────────────────────────────────────────┐
+│ PORTS YANG DIGUNAKAN:                                             │
+└────────────────────────────────────────────────────────────────────┘
+
+🔵 Backend API      PORT 8000
+   Process: python (uvicorn)
+   Status: http://localhost:8000/health
+
+🟣 Frontend UI      PORT 5173
+   Process: node (npm dev server)
+   Status: Automatic when page loads
+
+🟠 PostgreSQL DB    PORT 5432 (jika menggunakan Docker)
+   Default DB: tgd_system
+   User: tgd_user
+
+┌────────────────────────────────────────────────────────────────────┐
+│ JIKA ADA ERROR:                                                   │
+└────────────────────────────────────────────────────────────────────┘
+
+❌ "Python not found"
+   ✓ Install Python dari https://python.org
+   ✓ Atau check PATH configuration
+
+❌ "npm not found"
+   ✓ Install Node.js dari https://nodejs.org
+   ✓ Atau check PATH configuration
+
+❌ "Port 8000/5173 already in use"
+   ✓ Jalankan STOP_ALL.bat terlebih dahulu
+   ✓ Atau kill process yang menggunakan port
+
+❌ Frontend tidak loading
+   ✓ Check window "TGd-Frontend" untuk error
+   ✓ Tunggu npm selesai compile
+   ✓ Refresh browser (Ctrl+F5)
+
+❌ Backend error "Asset not found"
+   ✓ Pastikan seed_data.py sudah berjalan
+   ✓ Check apakah database sudah initialized
+   ✓ Delete file .db dan restart launcher
+
+┌────────────────────────────────────────────────────────────────────┐
+│ MANUAL START (Jika Launcher Error):                               │
+└────────────────────────────────────────────────────────────────────┘
+
+Buka 3 Command Prompt terpisah:
+
+[CMD 1] Database Initialization
+  cd D:\TDd_System\backend
+  python seed_data.py
+
+[CMD 2] Backend API
+  cd D:\TDd_System\backend
+  python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+
+[CMD 3] Frontend
+  cd D:\TDd_System\frontend
+  npm run dev
+
+Kemudian buka browser ke: http://localhost:5173
+
+┌────────────────────────────────────────────────────────────────────┐
+│ STOP SERVICES:                                                    │
+└────────────────────────────────────────────────────────────────────┘
+
+Double-click: STOP_ALL.bat
+
+Atau close windows secara manual dan gunakan:
+  Ctrl+C di setiap command window
+
+┌────────────────────────────────────────────────────────────────────┐
+│ USEFUL LINKS:                                                     │
+└────────────────────────────────────────────────────────────────────┘
+
+📚 API Reference:        http://localhost:8000/docs
+📖 Project Docs:         ./DOCUMENTATION.md
+🔧 Installation Guide:   ./INSTALLATION.md
+🚀 Quick Start:          ./QUICK_START.md
+🐳 Docker Compose:       ./docker-compose.yml
+
+┌────────────────────────────────────────────────────────────────────┐
+│ STRUKTUR FOLDER:                                                  │
+└────────────────────────────────────────────────────────────────────┘
+
+TGd_System/
+├── backend/                 ← FastAPI server
+│   ├── app/
+│   ├── tgd_system_phase1.db ← SQLite database
+│   └── seed_data.py         ← Initialize database
+├── frontend/                ← React interface
+│   ├── src/
+│   ├── public/
+│   └── package.json
+├── START_ALL.bat            ← Main launcher
+├── START_SILENT.vbs         ← Silent launcher
+├── START_ALL_ADVANCED.bat   ← Advanced launcher with logs
+├── STOP_ALL.bat             ← Stop all services
+└── LAUNCHER_README.md       ← Full documentation
+
+═══════════════════════════════════════════════════════════════════════
+
+💡 TIPS:
+   • Jalankan launcher sebagai Administrator untuk hasil optimal
+   • Pastikan antivirus tidak memblokir python.exe atau node.exe
+   • Check internet connection untuk npm install
+   • Clear browser cache jika ada issue (Ctrl+Shift+Del)
+
+📞 NEED HELP?
+   Check logs folder untuk detailed error messages
+   Run START_ALL_ADVANCED.bat untuk logging
+
+═══════════════════════════════════════════════════════════════════════

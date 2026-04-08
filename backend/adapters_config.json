@@ -1,0 +1,110 @@
+{
+  "mqtt": {
+    "enabled": true,
+    "broker_host": "localhost",
+    "broker_port": 1883,
+    "username": null,
+    "password": null,
+    "subscriptions": [
+      {
+        "topic": "sensors/factory1/temperature",
+        "asset_id": "asset-1",
+        "sensor_type": "temperature"
+      },
+      {
+        "topic": "sensors/factory1/vibration",
+        "asset_id": "asset-1",
+        "sensor_type": "vibration"
+      },
+      {
+        "topic": "sensors/warehouse/humidity",
+        "asset_id": "asset-2",
+        "sensor_type": "humidity"
+      },
+      {
+        "topic": "sensors/warehouse/temperature",
+        "asset_id": "asset-2",
+        "sensor_type": "temperature"
+      },
+      {
+        "topic": "sensors/vehicle/gps",
+        "asset_id": "asset-3",
+        "sensor_type": "gps"
+      },
+      {
+        "topic": "sensors/vehicle/fuel",
+        "asset_id": "asset-3",
+        "sensor_type": "fuel_level"
+      },
+      {
+        "topic": "sensors/equipment/pressure",
+        "asset_id": "asset-4",
+        "sensor_type": "pressure"
+      },
+      {
+        "topic": "sensors/equipment/temperature",
+        "asset_id": "asset-4",
+        "sensor_type": "temperature"
+      }
+    ]
+  },
+  "modbus": {
+    "enabled": true,
+    "host": "localhost",
+    "port": 502,
+    "slave_id": 1,
+    "poll_interval": 5.0,
+    "mappings": [
+      {
+        "register_address": 0,
+        "asset_id": "asset-1",
+        "sensor_type": "temperature",
+        "data_type": "float32",
+        "scale": 1.0,
+        "offset": 0.0,
+        "unit": "°C",
+        "name": "CNC Machine Temperature"
+      },
+      {
+        "register_address": 2,
+        "asset_id": "asset-1",
+        "sensor_type": "vibration",
+        "data_type": "float32",
+        "scale": 1.0,
+        "offset": 0.0,
+        "unit": "mm/s",
+        "name": "CNC Machine Vibration"
+      },
+      {
+        "register_address": 4,
+        "asset_id": "asset-2",
+        "sensor_type": "pressure",
+        "data_type": "float32",
+        "scale": 1.0,
+        "offset": 0.0,
+        "unit": "bar",
+        "name": "Hydraulic Pressure"
+      },
+      {
+        "register_address": 6,
+        "asset_id": "asset-4",
+        "sensor_type": "pressure",
+        "data_type": "float32",
+        "scale": 1.0,
+        "offset": 0.0,
+        "unit": "bar",
+        "name": "Compressor Pressure"
+      },
+      {
+        "register_address": 8,
+        "asset_id": "asset-4",
+        "sensor_type": "temperature",
+        "data_type": "float32",
+        "scale": 1.0,
+        "offset": 0.0,
+        "unit": "°C",
+        "name": "Compressor Temperature"
+      }
+    ]
+  }
+}
