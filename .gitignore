@@ -10,3 +10,5 @@ Exee/
 *.onnx
 .git/
 dist/
+backend/venv
+/venv
