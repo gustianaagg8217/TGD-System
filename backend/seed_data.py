@@ -431,7 +431,7 @@ def main():
         if "already exists" in str(e):
             print("[WARN] Some indexes already exist (metadata cache), continuing anyway...")
             # Try to create remaining tables by handling the error gracefully
-            with engine.connect() as conn:
+            with engine.connect() as conn: #connection to database
                 for table in Base.metadata.sorted_tables:
                     try:
                         table.create(conn, checkfirst=True)

@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import EditRoleModal from '../components/EditRoleModal'
+import roleService from '../services/roleService'
 
 export default function UsersPage() {
   const [activeTab, setActiveTab] = useState('users')
@@ -9,6 +11,8 @@ export default function UsersPage() {
   const [editSubMode, setEditSubMode] = useState('info') // 'info' or 'password'
   const [passwordData, setPasswordData] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' })
   const [passwordError, setPasswordError] = useState('')
+  const [selectedRole, setSelectedRole] = useState(null)
+  const [showEditRoleModal, setShowEditRoleModal] = useState(false)
   const currentUserRole = 'Admin' // TODO: Get from auth context
 
   const [users, setUsers] = useState([
@@ -561,12 +565,35 @@ export default function UsersPage() {
                 <p className="text-xs font-semibold text-gray-600 mb-2">USERS IN THIS ROLE</p>
                 <p className="text-2xl font-bold">{users.filter(u => u.role === role.name).length}</p>
               </div>
-              <button className="mt-4 w-full border border-primary-600 text-primary-600 px-4 py-2 rounded-lg hover:bg-primary-50 font-medium">
-                Edit Role
+              <button
+                onClick={() => {
+                  setSelectedRole(role)
+                  setShowEditRoleModal(true)
+                }}
+                className="mt-4 w-full border border-primary-600 text-primary-600 px-4 py-2 rounded-lg hover:bg-primary-50 font-medium transition hover:bg-primary-100"
+              >
+                ✏️ Edit Role
               </button>
             </div>
           ))}
         </div>
+
+        {/* Edit Role Modal */}
+        {showEditRoleModal && selectedRole && (
+          <EditRoleModal
+            role={selectedRole}
+            allPermissions={permissions}
+            users={users}
+            onClose={() => {
+              setShowEditRoleModal(false)
+              setSelectedRole(null)
+            }}
+            onSave={(updatedRole) => {
+              // Update role in local state if needed
+              console.log('Role updated:', updatedRole)
+            }}
+          />
+        )}
       )}
 
       {/* PERMISSIONS TAB */}
