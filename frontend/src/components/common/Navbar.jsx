@@ -1,14 +1,17 @@
 import { useState, useContext } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { AuthContext } from '../../context/AuthContext'
+import { LanguageContext } from '../../context/LanguageContext'
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isLanguageOpen, setIsLanguageOpen] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useContext(AuthContext)
+  const { language, changeLanguage, t } = useContext(LanguageContext)
 
   const handleLogout = () => {
     logout()
@@ -18,21 +21,21 @@ export default function Navbar() {
   const displayName = user?.full_name || user?.username || 'User'
 
   const navItems = [
-    { path: '/', label: 'Dashboard' },
-    { path: '/assets', label: 'Assets' },
-    { path: '/maintenance', label: 'Maintenance' },
-    { path: '/inventory', label: 'Inventory' },
-    { path: '/fleet', label: 'Fleet' },
-    { path: '/documents', label: 'Documents' },
-    { path: '/gis', label: 'GIS' },
-    { path: '/it-assets', label: 'IT Assets' },
-    { path: '/sensors', label: 'Sensors' },
-    { path: '/reports', label: 'Reports' },
+    { path: '/', labelKey: 'nav.dashboard' },
+    { path: '/assets', labelKey: 'nav.assets' },
+    { path: '/maintenance', labelKey: 'nav.maintenance' },
+    { path: '/inventory', labelKey: 'nav.inventory' },
+    { path: '/fleet', labelKey: 'nav.fleet' },
+    { path: '/documents', labelKey: 'nav.documents' },
+    { path: '/gis', labelKey: 'nav.gis' },
+    { path: '/it-assets', labelKey: 'nav.itAssets' },
+    { path: '/sensors', labelKey: 'nav.sensors' },
+    { path: '/reports', labelKey: 'nav.reports' },
   ]
 
   const settingsItems = [
-    { path: '/users', label: '👥 Users & Access' },
-    { path: '/settings', label: '⚙️ Settings' },
+    { path: '/users', labelKey: 'nav.users' },
+    { path: '/settings', labelKey: 'nav.settings' },
   ]
 
   return (
@@ -55,9 +58,47 @@ export default function Navbar() {
                     : 'text-white hover:bg-primary-500'
                 }`}
               >
-                {item.label}
+                {t(item.labelKey)}
               </Link>
             ))}
+
+            {/* Language Switcher */}
+            <div className="relative">
+              <button 
+                onClick={() => setIsLanguageOpen(!isLanguageOpen)}
+                className="flex items-center gap-2 px-4 py-2 rounded text-white hover:bg-primary-500 transition ml-2"
+                title="Change Language"
+              >
+                <span className="text-xl">🌐</span>
+                <span className="text-sm">{language.toUpperCase()}</span>
+              </button>
+              {isLanguageOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl z-50">
+                  <button
+                    onClick={() => {
+                      changeLanguage('en')
+                      setIsLanguageOpen(false)
+                    }}
+                    className={`block w-full text-left px-4 py-3 font-medium transition ${
+                      language === 'en' ? 'bg-blue-50 text-primary-600' : 'text-gray-800 hover:bg-gray-100'
+                    }`}
+                  >
+                    🇺🇸 {t('language.english')}
+                  </button>
+                  <button
+                    onClick={() => {
+                      changeLanguage('id')
+                      setIsLanguageOpen(false)
+                    }}
+                    className={`block w-full text-left px-4 py-3 font-medium transition border-t ${
+                      language === 'id' ? 'bg-blue-50 text-primary-600' : 'text-gray-800 hover:bg-gray-100'
+                    }`}
+                  >
+                    🇮🇩 {t('language.indonesian')}
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Settings Dropdown */}
             <div className="relative">
@@ -78,7 +119,7 @@ export default function Navbar() {
                         location.pathname === item.path ? 'bg-gray-50' : ''
                       }`}
                     >
-                      {item.label}
+                      {t(item.labelKey)}
                     </Link>
                   ))}
                 </div>
@@ -101,7 +142,7 @@ export default function Navbar() {
                     onClick={handleLogout}
                     className="w-full text-left px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-lg font-medium transition border-t"
                   >
-                    🚪 Logout
+                    🚪 {t('nav.logout')}
                   </button>
                 </div>
               )}
@@ -131,13 +172,51 @@ export default function Navbar() {
                 }`}
                 onClick={() => setIsMenuOpen(false)}
               >
-                {item.label}
+                {t(item.labelKey)}
               </Link>
             ))}
             
+            {/* Language Section Mobile */}
+            <div className="border-t border-primary-500 mt-2 pt-2">
+              <button
+                onClick={() => setIsLanguageOpen(!isLanguageOpen)}
+                className="w-full text-left px-4 py-2 text-white hover:bg-primary-500 rounded font-medium"
+              >
+                🌐 {t('language.select')}
+              </button>
+              {isLanguageOpen && (
+                <div className="ml-4">
+                  <button
+                    onClick={() => {
+                      changeLanguage('en')
+                      setIsLanguageOpen(false)
+                      setIsMenuOpen(false)
+                    }}
+                    className={`block w-full text-left px-4 py-2 rounded font-medium transition ${
+                      language === 'en' ? 'bg-primary-500' : 'text-white hover:bg-primary-500'
+                    }`}
+                  >
+                    🇺🇸 {t('language.english')}
+                  </button>
+                  <button
+                    onClick={() => {
+                      changeLanguage('id')
+                      setIsLanguageOpen(false)
+                      setIsMenuOpen(false)
+                    }}
+                    className={`block w-full text-left px-4 py-2 rounded font-medium transition ${
+                      language === 'id' ? 'bg-primary-500' : 'text-white hover:bg-primary-500'
+                    }`}
+                  >
+                    🇮🇩 {t('language.indonesian')}
+                  </button>
+                </div>
+              )}
+            </div>
+            
             {/* Settings Section */}
             <div className="border-t border-primary-500 mt-2 pt-2">
-              <p className="text-white text-sm font-semibold px-4 py-2">Settings</p>
+              <p className="text-white text-sm font-semibold px-4 py-2">{t('nav.settings')}</p>
               {settingsItems.map((item) => (
                 <Link
                   key={item.path}
@@ -149,7 +228,7 @@ export default function Navbar() {
                   }`}
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  {item.label}
+                  {t(item.labelKey)}
                 </Link>
               ))}
             </div>
@@ -158,7 +237,7 @@ export default function Navbar() {
               onClick={handleLogout}
               className="w-full text-left px-4 py-3 text-white hover:bg-primary-500 font-medium transition mt-2 border-t border-primary-500"
             >
-              🚪 Logout
+              🚪 {t('nav.logout')}
             </button>
           </div>
         )}

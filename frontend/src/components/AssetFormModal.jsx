@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useContext } from 'react'
 import { assetService } from '../services/assetService'
+import { LanguageContext } from '../context/LanguageContext'
 
 export default function AssetFormModal({ asset, onClose, onSave, isEdit = false }) {
+  const { t } = useContext(LanguageContext)
   const [formData, setFormData] = useState({
     name: '',
     type: '',
@@ -65,11 +67,11 @@ export default function AssetFormModal({ asset, onClose, onSave, isEdit = false 
 
   const validateForm = () => {
     if (!formData.name.trim()) {
-      setError('Nama asset harus diisi')
+      setError(t('forms.nameRequired'))
       return false
     }
     if (!formData.type.trim()) {
-      setError('Tipe asset harus dipilih')
+      setError(t('forms.typeRequired'))
       return false
     }
     return true
@@ -96,11 +98,11 @@ export default function AssetFormModal({ asset, onClose, onSave, isEdit = false 
       if (isEdit && asset?.id) {
         // Update existing asset
         await assetService.updateAsset(asset.id, dataToSend)
-        setSuccess('✓ Asset berhasil diupdate!')
+        setSuccess(t('assets.updateSuccess'))
       } else {
         // Create new asset
         await assetService.createAsset(dataToSend)
-        setSuccess('✓ Asset berhasil ditambahkan!')
+        setSuccess(t('assets.saveSuccess'))
       }
 
       if (onSave) {
@@ -109,8 +111,8 @@ export default function AssetFormModal({ asset, onClose, onSave, isEdit = false 
 
       setTimeout(() => onClose(), 1500)
     } catch (err) {
-      const msg = err.response?.data?.detail || err.message || 'Gagal menyimpan asset'
-      setError(`❌ ${msg}`)
+      const msg = err.response?.data?.detail || err.message || t('assets.errorSaving')
+      setError(`${msg}`)
       console.error('Error:', err)
     } finally {
       setLoading(false)
@@ -122,10 +124,10 @@ export default function AssetFormModal({ asset, onClose, onSave, isEdit = false 
       <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white border-b p-6">
           <h2 className="text-3xl font-bold text-gray-900">
-            {isEdit ? '✏️ Edit Asset' : '➕ Tambah Asset Baru'}
+            {isEdit ? '✏️ ' + t('assets.editAsset') : '➕ ' + t('assets.addAsset')}
           </h2>
           <p className="text-gray-500 mt-1">
-            {isEdit ? `Ubah informasi asset: ${asset?.name}` : 'Tambahkan asset baru ke sistem'}
+            {isEdit ? `${t('assets.edit')}: ${asset?.name}` : t('assets.addAsset')}
           </p>
         </div>
 
@@ -317,7 +319,7 @@ export default function AssetFormModal({ asset, onClose, onSave, isEdit = false 
               disabled={loading}
               className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
-              Batal
+              {t('forms.cancel')}
             </button>
             <button
               type="submit"
@@ -327,11 +329,11 @@ export default function AssetFormModal({ asset, onClose, onSave, isEdit = false 
               {loading ? (
                 <>
                   <span className="animate-spin">⏳</span>
-                  Menyimpan...
+                  {t('forms.saving')}
                 </>
               ) : (
                 <>
-                  {isEdit ? '💾 Update Asset' : '✅ Tambah Asset'}
+                  {isEdit ? '💾 ' + t('forms.update') : '✅ ' + t('forms.add')}
                 </>
               )}
             </button>

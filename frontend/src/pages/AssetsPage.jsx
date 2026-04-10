@@ -1,9 +1,11 @@
 import { useState, useContext } from 'react'
 import { AuthContext } from '../context/AuthContext'
+import { LanguageContext } from '../context/LanguageContext'
 import AssetFormModal from '../components/AssetFormModal'
 
 export default function AssetsPage() {
   const { user } = useContext(AuthContext)
+  const { t } = useContext(LanguageContext)
   
   const [activeTab, setActiveTab] = useState('overview')
   const [selectedAsset, setSelectedAsset] = useState(null)
@@ -130,7 +132,7 @@ export default function AssetsPage() {
                   }}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
                 >
-                  ➕ Tambah Asset
+                  ➕ {t('assets.addAsset')}
                 </button>
               )}
               <button onClick={() => setViewMode('list')} className={`px-3 py-1 rounded ${viewMode === 'list' ? 'bg-primary-600 text-white' : 'border'}`}>List</button>
@@ -143,12 +145,12 @@ export default function AssetsPage() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-100 border-b">
                   <tr>
-                    <th className="px-6 py-4 text-left font-semibold">Asset Name</th>
-                    <th className="px-6 py-4 text-left font-semibold">Type</th>
-                    <th className="px-6 py-4 text-left font-semibold">Location</th>
-                    <th className="px-6 py-4 text-left font-semibold">Value</th>
-                    <th className="px-6 py-4 text-left font-semibold">Status</th>
-                    {isAdmin && <th className="px-6 py-4 text-left font-semibold">Aksi</th>}
+                    <th className="px-6 py-4 text-left font-semibold">{t('assets.assetName')}</th>
+                    <th className="px-6 py-4 text-left font-semibold">{t('assets.type')}</th>
+                    <th className="px-6 py-4 text-left font-semibold">{t('assets.location')}</th>
+                    <th className="px-6 py-4 text-left font-semibold">{t('assets.value')}</th>
+                    <th className="px-6 py-4 text-left font-semibold">{t('assets.status')}</th>
+                    {isAdmin && <th className="px-6 py-4 text-left font-semibold">{t('assets.action')}</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -169,7 +171,7 @@ export default function AssetsPage() {
                             }}
                             className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
                           >
-                            ✏️ Edit
+                            ✏️ {t('assets.edit')}
                           </button>
                         </td>
                       )}
@@ -196,7 +198,7 @@ export default function AssetsPage() {
                         }}
                         className="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
                       >
-                        ✏️ Edit
+                        ✏️ {t('assets.edit')}
                       </button>
                     </div>
                   )}
@@ -284,8 +286,8 @@ export default function AssetsPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-4xl font-bold">🏭 Complete Asset Registry</h1>
-        <p className="text-gray-600 mt-2">9 Asset Categories: Mining Equipment, Facilities, Fleet, IT, Land, Digital Assets & More</p>
+        <h1 className="text-4xl font-bold">🏭 {t('assets.title')}</h1>
+        <p className="text-gray-600 mt-2">{t('assets.subtitle')}</p>
       </div>
 
       <div className="flex flex-wrap gap-2 mb-8 bg-white rounded-lg shadow p-2">
@@ -297,10 +299,10 @@ export default function AssetsPage() {
               activeTab === tab ? 'bg-primary-600 text-white' : 'text-gray-800 hover:bg-gray-100'
             }`}
           >
-            {tab === 'overview' && '📊 Overview'}
-            {tab === 'by-category' && '📂 By Category'}
-            {tab === 'maintenance' && '🔧 Maintenance'}
-            {tab === 'depreciation' && '💰 Financial'}
+            {tab === 'overview' && '📊 ' + t('assets.overview')}
+            {tab === 'by-category' && '📂 ' + t('assets.category')}
+            {tab === 'maintenance' && '🔧 ' + t('assets.maintenance')}
+            {tab === 'depreciation' && '💰 ' + t('assets.financial')}
           </button>
         ))}
       </div>
@@ -312,10 +314,10 @@ export default function AssetsPage() {
           <div className="bg-white rounded-lg shadow-lg p-8 max-w-2xl w-full max-h-96 overflow-y-auto">
             <h2 className="text-2xl font-bold mb-6">{selectedAsset.name}</h2>
             <div className="grid grid-cols-2 gap-4 text-sm">
-              <div><p className="text-gray-600">Type</p><p className="font-bold">{selectedAsset.type}</p></div>
-              <div><p className="text-gray-600">Location</p><p className="font-bold">{selectedAsset.location}</p></div>
-              <div><p className="text-gray-600">Current Value</p><p className="font-bold text-primary-600">{selectedAsset.value}</p></div>
-              <div><p className="text-gray-600">Status</p><p className="font-bold">{selectedAsset.status}</p></div>
+              <div><p className="text-gray-600">{t('assets.type')}</p><p className="font-bold">{selectedAsset.type}</p></div>
+              <div><p className="text-gray-600">{t('assets.location')}</p><p className="font-bold">{selectedAsset.location}</p></div>
+              <div><p className="text-gray-600">{t('assets.value')}</p><p className="font-bold text-primary-600">{selectedAsset.value}</p></div>
+              <div><p className="text-gray-600">{t('assets.status')}</p><p className="font-bold">{selectedAsset.status}</p></div>
             </div>
             <div className="flex gap-3 mt-6">
               {isAdmin && (
@@ -327,14 +329,14 @@ export default function AssetsPage() {
                   }}
                   className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
                 >
-                  ✏️ Edit Asset
+                  ✏️ {t('assets.editAsset')}
                 </button>
               )}
               <button
                 onClick={() => setSelectedAsset(null)}
                 className="flex-1 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
               >
-                Close
+                {t('assets.close')}
               </button>
             </div>
           </div>

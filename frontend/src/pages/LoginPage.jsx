@@ -2,6 +2,7 @@ import { useState, useContext } from 'react'
 import { authService } from '../services/authService'
 import { useNavigate } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
+import { LanguageContext } from '../context/LanguageContext'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -10,6 +11,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
   const { login } = useContext(AuthContext)
+  const { changeLanguage, t } = useContext(LanguageContext)
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -43,7 +45,7 @@ export default function LoginPage() {
       }, 100)
     } catch (err) {
       console.error('Login error:', err)
-      setError('Invalid credentials')
+      setError(t('login.invalidCredentials'))
     } finally {
       setLoading(false)
     }
@@ -52,14 +54,26 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-primary-50">
       <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h1 className="text-3xl font-bold mb-6 text-center">TGd System</h1>
-        <p className="text-gray-600 text-center mb-8">Asset Management Platform</p>
+        {/* Language Switcher */}
+        <div className="flex justify-end mb-4">
+          <select
+            onChange={(e) => changeLanguage(e.target.value)}
+            defaultValue={localStorage.getItem('language') || 'en'}
+            className="px-3 py-1 border border-gray-300 rounded text-sm"
+          >
+            <option value="en">🇺🇸 English</option>
+            <option value="id">🇮🇩 Bahasa Indonesia</option>
+          </select>
+        </div>
+
+        <h1 className="text-3xl font-bold mb-6 text-center">{t('login.title')}</h1>
+        <p className="text-gray-600 text-center mb-8">{t('login.subtitle')}</p>
 
         {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
 
         <form onSubmit={handleLogin}>
           <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-semibold mb-2">Email</label>
+            <label className="block text-gray-700 text-sm font-semibold mb-2">{t('login.email')}</label>
             <input
               type="email"
               className="input-base"
@@ -70,7 +84,7 @@ export default function LoginPage() {
           </div>
 
           <div className="mb-6">
-            <label className="block text-gray-700 text-sm font-semibold mb-2">Password</label>
+            <label className="block text-gray-700 text-sm font-semibold mb-2">{t('login.password')}</label>
             <input
               type="password"
               className="input-base"
@@ -85,12 +99,12 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 disabled:opacity-50"
           >
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? t('login.loggingIn') : t('login.login')}
           </button>
         </form>
 
         <p className="text-gray-600 text-sm text-center mt-4">
-          Demo credentials: admin / password123
+          {t('login.demo')}
         </p>
       </div>
     </div>
