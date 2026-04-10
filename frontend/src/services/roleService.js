@@ -37,8 +37,10 @@ class RoleService {
    */
   async getRoleByName(roleName) {
     try {
-      const response = await api.get(`/roles/name/${roleName}`)
-      return response.data
+      // Get all roles and find by name since backend doesn't have name-based endpoint
+      const response = await api.get('/roles')
+      const roles = response.data.data || response.data
+      return roles.find(r => r.name === roleName)
     } catch (error) {
       console.error('Error fetching role by name:', error)
       throw error
@@ -72,14 +74,24 @@ class RoleService {
   }
 
   /**
-   * Update role by name
+   * Update role by name (finds ID first, then updates)
    */
   async updateRoleByName(roleName, roleData) {
     try {
-      const response = await api.put(`/roles/name/${roleName}`, roleData)
+      // First, get all roles to find the ID
+      const allRolesResponse = await api.get('/roles')
+      const roles = allRolesResponse.data.data || allRolesResponse.data
+      const role = roles.find(r => r.name === roleName)
+      
+      if (!role || !role.id) {
+        throw new Error(`Role with name "${roleName}" not found or missing ID`)
+      }
+      
+      // Then update using the ID
+      const response = await api.put(`/roles/${role.id}`, roleData)
       return response.data
     } catch (error) {
-      console.error('Error updating role:', error)
+      console.error('Error updating role by name:', error)
       throw error
     }
   }

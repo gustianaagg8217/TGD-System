@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useContext } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { AuthContext } from '../../context/AuthContext'
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -7,12 +8,14 @@ export default function Navbar() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
+  const { user, logout } = useContext(AuthContext)
 
   const handleLogout = () => {
-    localStorage.removeItem('access_token')
-    localStorage.removeItem('refresh_token')
+    logout()
     navigate('/login')
   }
+
+  const displayName = user?.full_name || user?.username || 'User'
 
   const navItems = [
     { path: '/', label: 'Dashboard' },
@@ -89,7 +92,7 @@ export default function Navbar() {
                 className="flex items-center gap-2 px-4 py-2 rounded text-white hover:bg-primary-500 transition"
               >
                 <span className="text-xl">👤</span>
-                <span>Admin</span>
+                <span>{displayName}</span>
               </button>
 
               {isProfileOpen && (

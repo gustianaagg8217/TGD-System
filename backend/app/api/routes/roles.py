@@ -10,7 +10,8 @@ from sqlalchemy import func
 from typing import List
 
 from app.db.session import get_db
-from app.models.user import Role, User
+from app.models.role import Role
+from app.models.user import User
 from app.schemas.user import RoleResponse, RoleUpdate, RoleCreate, RoleWithUsersResponse
 from app.api.deps import get_current_user
 

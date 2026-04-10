@@ -4,6 +4,7 @@ from app.models.asset import Asset
 from app.models.document import Document
 from app.models.inventory import InventoryItem
 from app.models.maintenance import MaintenanceLog
+from app.models.role import Role
 from app.models.sensor import SensorLog
 from app.models.sensor_reading import SensorReading, SensorAlert, IoTDataSync
 from app.models.user import User
@@ -14,6 +15,7 @@ __all__ = [
     "Document",
     "InventoryItem",
     "MaintenanceLog",
+    "Role",
     "SensorLog",
     "SensorReading",
     "SensorAlert",

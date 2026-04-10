@@ -1,10 +1,20 @@
-import { useState } from 'react'
+import { useState, useContext } from 'react'
+import { AuthContext } from '../context/AuthContext'
+import AssetFormModal from '../components/AssetFormModal'
 
 export default function AssetsPage() {
+  const { user } = useContext(AuthContext)
+  
   const [activeTab, setActiveTab] = useState('overview')
   const [selectedAsset, setSelectedAsset] = useState(null)
   const [viewMode, setViewMode] = useState('list')
   const [filterCategory, setFilterCategory] = useState('all')
+  const [showAssetForm, setShowAssetForm] = useState(false)
+  const [editingAsset, setEditingAsset] = useState(null)
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
+
+  // Check if user is admin or engineer
+  const isAdmin = user?.role?.name === 'admin' || user?.role?.name === 'Admin' || user?.role?.name === 'engineer' || user?.role?.name === 'Engineer'
 
   const assetCategories = [
     { id: 'mining', name: '⛏️ Mining Equipment', count: 5, value: '$8.2M' },
@@ -101,7 +111,7 @@ export default function AssetsPage() {
       
       return (
         <div className="space-y-4">
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
             <select
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
@@ -111,7 +121,18 @@ export default function AssetsPage() {
               <option value="processing">Processing Facilities</option>
               <option value="infrastructure">Infrastructure</option>
             </select>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
+              {isAdmin && (
+                <button
+                  onClick={() => {
+                    setEditingAsset(null)
+                    setShowAssetForm(true)
+                  }}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+                >
+                  ➕ Tambah Asset
+                </button>
+              )}
               <button onClick={() => setViewMode('list')} className={`px-3 py-1 rounded ${viewMode === 'list' ? 'bg-primary-600 text-white' : 'border'}`}>List</button>
               <button onClick={() => setViewMode('grid')} className={`px-3 py-1 rounded ${viewMode === 'grid' ? 'bg-primary-600 text-white' : 'border'}`}>Grid</button>
             </div>
@@ -127,16 +148,31 @@ export default function AssetsPage() {
                     <th className="px-6 py-4 text-left font-semibold">Location</th>
                     <th className="px-6 py-4 text-left font-semibold">Value</th>
                     <th className="px-6 py-4 text-left font-semibold">Status</th>
+                    {isAdmin && <th className="px-6 py-4 text-left font-semibold">Aksi</th>}
                   </tr>
                 </thead>
                 <tbody>
                   {filteredList.map((asset, idx) => (
-                    <tr key={idx} className="border-t hover:bg-gray-50 cursor-pointer" onClick={() => setSelectedAsset(asset)}>
-                      <td className="px-6 py-4 font-medium">{asset.name}</td>
-                      <td className="px-6 py-4">{asset.type}</td>
-                      <td className="px-6 py-4 text-gray-600">{asset.location}</td>
-                      <td className="px-6 py-4 font-semibold">{asset.value}</td>
-                      <td className="px-6 py-4">{asset.status}</td>
+                    <tr key={idx} className="border-t hover:bg-gray-50">
+                      <td className="px-6 py-4 font-medium cursor-pointer" onClick={() => setSelectedAsset(asset)}>{asset.name}</td>
+                      <td className="px-6 py-4 cursor-pointer" onClick={() => setSelectedAsset(asset)}>{asset.type}</td>
+                      <td className="px-6 py-4 text-gray-600 cursor-pointer" onClick={() => setSelectedAsset(asset)}>{asset.location}</td>
+                      <td className="px-6 py-4 font-semibold cursor-pointer" onClick={() => setSelectedAsset(asset)}>{asset.value}</td>
+                      <td className="px-6 py-4 cursor-pointer" onClick={() => setSelectedAsset(asset)}>{asset.status}</td>
+                      {isAdmin && (
+                        <td className="px-6 py-4">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setEditingAsset(asset)
+                              setShowAssetForm(true)
+                            }}
+                            className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
+                          >
+                            ✏️ Edit
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -147,9 +183,23 @@ export default function AssetsPage() {
               {filteredList.map((asset, idx) => (
                 <div
                   key={idx}
-                  className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition cursor-pointer"
+                  className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition cursor-pointer relative group"
                   onClick={() => setSelectedAsset(asset)}
                 >
+                  {isAdmin && (
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setEditingAsset(asset)
+                          setShowAssetForm(true)
+                        }}
+                        className="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
+                      >
+                        ✏️ Edit
+                      </button>
+                    </div>
+                  )}
                   <h3 className="font-bold text-lg mb-2">{asset.name}</h3>
                   <p className="text-gray-600 text-sm mb-3">{asset.type}</p>
                   <div className="space-y-2 text-sm">
@@ -267,14 +317,44 @@ export default function AssetsPage() {
               <div><p className="text-gray-600">Current Value</p><p className="font-bold text-primary-600">{selectedAsset.value}</p></div>
               <div><p className="text-gray-600">Status</p><p className="font-bold">{selectedAsset.status}</p></div>
             </div>
-            <button
-              onClick={() => setSelectedAsset(null)}
-              className="mt-6 w-full bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
-            >
-              Close
-            </button>
+            <div className="flex gap-3 mt-6">
+              {isAdmin && (
+                <button
+                  onClick={() => {
+                    setEditingAsset(selectedAsset)
+                    setShowAssetForm(true)
+                    setSelectedAsset(null)
+                  }}
+                  className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                >
+                  ✏️ Edit Asset
+                </button>
+              )}
+              <button
+                onClick={() => setSelectedAsset(null)}
+                className="flex-1 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
+      )}
+
+      {showAssetForm && (
+        <AssetFormModal
+          asset={editingAsset}
+          isEdit={!!editingAsset}
+          onClose={() => {
+            setShowAssetForm(false)
+            setEditingAsset(null)
+          }}
+          onSave={() => {
+            setRefreshTrigger(prev => prev + 1)
+            setShowAssetForm(false)
+            setEditingAsset(null)
+          }}
+        />
       )}
     </div>
   )

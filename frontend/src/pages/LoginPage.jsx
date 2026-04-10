@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useContext } from 'react'
 import { authService } from '../services/authService'
 import { useNavigate } from 'react-router-dom'
+import { AuthContext } from '../context/AuthContext'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -8,6 +9,7 @@ export default function LoginPage() {
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+  const { login } = useContext(AuthContext)
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -24,6 +26,16 @@ export default function LoginPage() {
       const { access_token, refresh_token } = response.data
       localStorage.setItem('access_token', access_token)
       localStorage.setItem('refresh_token', refresh_token)
+      
+      // Fetch user data
+      try {
+        const userData = await authService.getCurrentUser()
+        login(userData.data)
+      } catch (err) {
+        console.error('Failed to fetch user data:', err)
+        // Still continue even if fetch fails
+        login({ email: email })
+      }
       
       // Small delay to ensure localStorage is persisted
       setTimeout(() => {

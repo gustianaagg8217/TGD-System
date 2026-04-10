@@ -108,7 +108,7 @@ def get_me(current_user=Depends(get_current_user)):
     """
     Get current authenticated user information.
 
-    Returns current user details.
+    Returns current user details including role.
     """
     return {
         "id": current_user.id,
@@ -116,5 +116,10 @@ def get_me(current_user=Depends(get_current_user)):
         "email": current_user.email,
         "full_name": current_user.full_name,
         "role_id": current_user.role_id,
+        "role": {
+            "id": current_user.role.id,
+            "name": current_user.role.name,
+        } if current_user.role else None,
         "is_active": current_user.is_active,
+        "last_login": current_user.last_login,
     }

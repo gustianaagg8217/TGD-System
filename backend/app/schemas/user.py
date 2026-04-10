@@ -9,6 +9,15 @@ from datetime import datetime
 from pydantic import BaseModel, Field, EmailStr
 
 
+class RoleEmbedded(BaseModel):
+    """Minimal role response for inclusion in user response."""
+    
+    id: str = Field(description="Role ID")
+    name: str = Field(description="Role name")
+    
+    model_config = {"from_attributes": True}
+
+
 class UserBase(BaseModel):
     """Base user schema."""
 
@@ -38,6 +47,7 @@ class UserResponse(UserBase):
     """User response schema."""
 
     id: str = Field(description="User ID")
+    role: Optional[RoleEmbedded] = Field(None, description="User role")
     last_login: Optional[datetime] = Field(description="Last login timestamp")
     created_at: datetime = Field(description="Creation timestamp")
     updated_at: datetime = Field(description="Last update timestamp")
@@ -84,6 +94,7 @@ class CurrentUserResponse(BaseModel):
     email: str
     full_name: str
     role_id: str
+    role: Optional[RoleEmbedded] = Field(None, description="User role details")
     is_active: bool
     last_login: Optional[datetime]
 

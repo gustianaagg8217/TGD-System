@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 
 from app.db.base import TimeStampedModel
 from app.core.constants import RoleEnum
+from app.models.role import Role
 
 
 class User(TimeStampedModel):
@@ -50,29 +51,3 @@ class User(TimeStampedModel):
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, username={self.username}, email={self.email})>"
-
-
-class Role(TimeStampedModel):
-    """
-    Role model for role-based access control (RBAC).
-
-    Attributes:
-        id: Unique role identifier
-        name: Role name (admin, engineer, viewer)
-        description: Role description
-        permissions: JSON array of permission codes
-        users: Relationship to User model
-    """
-
-    __tablename__ = "roles"
-
-    id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
-    description: Mapped[str] = mapped_column(String(255), nullable=True)
-    permissions: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
-
-    # Relationships
-    users: Mapped[list["User"]] = relationship("User", back_populates="role")
-
-    def __repr__(self) -> str:
-        return f"<Role(id={self.id}, name={self.name})>"
