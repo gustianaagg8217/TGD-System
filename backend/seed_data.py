@@ -166,6 +166,62 @@ def create_assets(db, user_id: str) -> list:
             "status": AssetStatusEnum.MAINTENANCE,
             "value": 1000000.00,
         },
+        {
+            "name": "Excavator CAT 390F",
+            "type": AssetTypeEnum.MACHINERY,
+            "location": "Mining Site - Block Alpha",
+            "status": AssetStatusEnum.ACTIVE,
+            "value": 2500000.00,
+        },
+        {
+            "name": "Dredger KIP-3000",
+            "type": AssetTypeEnum.MACHINERY,
+            "location": "Offshore Site - Block Delta",
+            "status": AssetStatusEnum.ACTIVE,
+            "value": 7500000.00,
+        },
+        {
+            "name": "Power Station 5MW",
+            "type": AssetTypeEnum.FACILITY,
+            "location": "Utility Area",
+            "status": AssetStatusEnum.ACTIVE,
+            "value": 5000000.00,
+        },
+        {
+            "name": "Smelter Plant",
+            "type": AssetTypeEnum.FACILITY,
+            "location": "Processing Plant",
+            "status": AssetStatusEnum.ACTIVE,
+            "value": 12500000.00,
+        },
+        {
+            "name": "Conveyor Belt System",
+            "type": AssetTypeEnum.EQUIPMENT,
+            "location": "Processing Area",
+            "status": AssetStatusEnum.ACTIVE,
+            "value": 800000.00,
+        },
+        {
+            "name": "Water Treatment Plant",
+            "type": AssetTypeEnum.FACILITY,
+            "location": "Utility Block",
+            "status": AssetStatusEnum.ACTIVE,
+            "value": 3000000.00,
+        },
+        {
+            "name": "Grinding Mill Unit",
+            "type": AssetTypeEnum.MACHINERY,
+            "location": "Processing Plant",
+            "status": AssetStatusEnum.ACTIVE,
+            "value": 1500000.00,
+        },
+        {
+            "name": "Boiler System",
+            "type": AssetTypeEnum.EQUIPMENT,
+            "location": "Utility Room",
+            "status": AssetStatusEnum.ACTIVE,
+            "value": 2000000.00,
+        },
     ]
 
     for asset in asset_data:
@@ -195,24 +251,45 @@ def create_assets(db, user_id: str) -> list:
 
 
 def create_maintenance_logs(db, assets: list, user_id: str) -> list:
-    """Create sample maintenance logs."""
+    """Create sample maintenance logs for all assets."""
     print("\nCreating maintenance logs...")
     logs = []
 
-    for asset in assets[:3]:  # Only for first 3 assets
-        for i in range(2):
+    maintenance_descriptions = {
+        "CNC Machining Center A": "Regular maintenance & lubrication",
+        "Hydraulic Press B": "Valve replacement",
+        "Air Compressor System": "Oil and filter change",
+        "Excavator CAT 390F": "Engine inspection and calibration",
+        "Dredger KIP-3000": "Hydraulic pump replacement",
+        "Power Station 5MW": "Turbine blade inspection",
+        "Smelter Plant": "Complete furnace cleaning",
+        "Forklift FL-001": "Battery inspection & fluid check",
+        "Conveyor Belt System": "Belt tension adjustment",
+        "Water Treatment Plant": "Filter membrane replacement",
+        "Grinding Mill Unit": "Ball mill bearing replacement",
+        "Boiler System": "Scale removal & tube cleaning",
+        "Building 1 - Roof": "Roof inspection and repair",
+    }
+
+    for idx, asset in enumerate(assets):
+        # Create 2-3 maintenance logs per asset (varying number)
+        num_logs = 2 if idx % 3 != 2 else 3
+        for i in range(num_logs):
+            maintenance_type = MaintenanceTypeEnum.PREVENTIVE if i == 0 else MaintenanceTypeEnum.CORRECTIVE
+            days_offset = 30 * (i + 1)
+            statuses = [MaintenanceStatusEnum.COMPLETED, MaintenanceStatusEnum.IN_PROGRESS, MaintenanceStatusEnum.SCHEDULED]
+            status = statuses[i % 3]
+            
             log = MaintenanceLog(
                 id=str(uuid4()),
                 asset_id=asset.id,
-                maintenance_type=(
-                    MaintenanceTypeEnum.PREVENTIVE if i == 0 else MaintenanceTypeEnum.CORRECTIVE
-                ),
-                date=datetime.now(timezone.utc) - timedelta(days=30 * i),
-                technician=f"Technician {i + 1}",
-                cost=5000.00 + (i * 1000),
+                maintenance_type=maintenance_type,
+                date=datetime.now(timezone.utc) - timedelta(days=days_offset),
+                technician=f"Technician {(idx % 5) + 1}",
+                cost=5000.00 + (idx * 500.0) + (i * 1000),
                 downtime=120 + (i * 60),
-                description=f"Maintenance operation {i + 1}",
-                status=MaintenanceStatusEnum.COMPLETED,
+                description=maintenance_descriptions.get(asset.name, f"Maintenance operation {i + 1}"),
+                status=status,
                 next_maintenance_date=datetime.now(timezone.utc) + timedelta(days=90),
                 created_by=user_id,
             )

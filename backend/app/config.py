@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     api_port: int = 8000
 
     # ===== Database Settings =====
-    database_url: str = "postgresql://tgd_user:tgd_password@localhost:5432/tgd_system"
+    database_url: str = "sqlite:///./tgd_system_phase1.db"  # SQLite for Phase 1 development
     database_echo: bool = False
     database_pool_size: int = 20
     database_max_overflow: int = 10
@@ -62,8 +62,7 @@ class Settings(BaseSettings):
         "http://127.0.0.1:8000",
         "ws://localhost:8000",
         "ws://127.0.0.1:8000",
-        "*",  # Allow all origins for development
-    ]
+    ]  # Development CORS origins (update for production)
     cors_credentials: bool = True
     cors_methods: List[str] = ["*"]
     cors_headers: List[str] = ["*"]
