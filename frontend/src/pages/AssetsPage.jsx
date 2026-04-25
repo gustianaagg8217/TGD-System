@@ -313,7 +313,20 @@ export default function AssetsPage() {
     }
 
     if (activeTab === 'by-category') {
-      const filteredList = filterCategory === 'all' ? miningEquipment : 
+      // Show all assets if "all" is selected, otherwise filter by category
+      const allAssets = [
+        ...organizedAssets.mining,
+        ...organizedAssets.processing,
+        ...organizedAssets.infrastructure,
+        ...organizedAssets.fleet,
+        ...organizedAssets.land,
+        ...organizedAssets.digital,
+        ...organizedAssets.it,
+        ...organizedAssets.inventory,
+        ...organizedAssets.environmental,
+      ]
+      
+      const filteredList = filterCategory === 'all' ? allAssets : 
                           categoryDataMap[filterCategory] || []
       
       return (
@@ -324,6 +337,7 @@ export default function AssetsPage() {
               onChange={(e) => setFilterCategory(e.target.value)}
               className="border rounded-lg px-4 py-2"
             >
+              <option value="all">📊 Semua Aset (All Categories)</option>
               <option value="mining">⛏️ Mining Equipment</option>
               <option value="processing">🏭 Processing Facilities</option>
               <option value="infrastructure">🏗️ Infrastructure</option>

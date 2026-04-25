@@ -10,6 +10,9 @@ export default function MaintenancePage() {
   const [filterStatus, setFilterStatus] = useState('all')
   const [filterType, setFilterType] = useState('all')
   const [showAddForm, setShowAddForm] = useState(false)
+  const [formError, setFormError] = useState(null)
+  const [formSuccess, setFormSuccess] = useState(false)
+  const [formSubmitting, setFormSubmitting] = useState(false)
 
   const [formData, setFormData] = useState({
     asset: '',
@@ -20,101 +23,358 @@ export default function MaintenancePage() {
   })
 
   useEffect(() => {
-    // Simulate fetching data
-    setTimeout(() => {
-      // Assets with lifecycle data
-      const assetsData = [
-        {
-          id: 1,
-          name: 'CNC Machining Center A',
-          purchaseDate: '2022-01-15',
-          purchasePrice: 500000,
-          warrantyExpiry: '2025-01-15',
-          amcExpiry: '2026-06-15',
-          lifecycle: 'Active',
-          depreciation: 75000,
-          currentValue: 425000,
-        },
-        {
-          id: 2,
-          name: 'Hydraulic Press B',
-          purchaseDate: '2020-06-20',
-          purchasePrice: 250000,
-          warrantyExpiry: '2022-06-20',
-          amcExpiry: '2026-12-31',
-          lifecycle: 'Mature',
-          depreciation: 100000,
-          currentValue: 150000,
-        },
-        {
-          id: 3,
-          name: 'Air Compressor System',
-          purchaseDate: '2024-03-10',
-          purchasePrice: 75000,
-          warrantyExpiry: '2026-03-10',
-          amcExpiry: '2027-03-10',
-          lifecycle: 'New',
-          depreciation: 5625,
-          currentValue: 69375,
-        },
-      ]
-
-      const maintenanceData = [
-        {
-          id: 1,
-          asset: 'CNC Machining Center A',
-          type: 'Preventive',
-          date: '2026-04-05',
-          technician: 'Technician 1',
-          status: 'Completed',
-          cost: 5000,
-          downtime: 120,
-          description: 'Regular maintenance',
-          nextDate: '2026-07-05',
-        },
-        {
-          id: 2,
-          asset: 'Hydraulic Press B',
-          type: 'Corrective',
-          date: '2026-04-06',
-          technician: 'Technician 2',
-          status: 'Completed',
-          cost: 7500,
-          downtime: 240,
-          description: 'Valve replacement',
-          nextDate: '2026-10-06',
-        },
-        {
-          id: 3,
-          asset: 'Air Compressor System',
-          type: 'Preventive',
-          date: '2026-04-07',
-          technician: 'Technician 1',
-          status: 'Pending',
-          cost: 3000,
-          downtime: 60,
-          description: 'Oil and filter change',
-          nextDate: '2026-07-07',
-        },
-        {
-          id: 4,
-          asset: 'Forklift FL-001',
-          type: 'Preventive',
-          date: '2026-04-04',
-          technician: 'Technician 3',
-          status: 'Scheduled',
-          cost: 2500,
-          downtime: 90,
-          description: 'Battery inspection',
-          nextDate: '2026-06-04',
-        },
-      ]
-
-      setAssets(assetsData)
-      setMaintenanceLogs(maintenanceData)
-      setFilteredLogs(maintenanceData)
-      setLoading(false)
-    }, 500)
+    // Fetch assets from API
+    const fetchAssets = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/assets?limit=100')
+        const data = await response.json()
+        
+        // Handle Axios wrapping (response.data.items structure)
+        let assetList = []
+        if (data.data && data.data.items && Array.isArray(data.data.items)) {
+          assetList = data.data.items
+        } else if (data.items && Array.isArray(data.items)) {
+          assetList = data.items
+        } else if (Array.isArray(data)) {
+          assetList = data
+        }
+        
+        // Map API response to frontend format
+        const assetsData = assetList.map(asset => ({
+          id: asset.id || asset.asset_id || 0,
+          name: asset.name || asset.asset_name || 'Unknown',
+          purchaseDate: asset.purchase_date || asset.purchaseDate || '2024-01-01',
+          purchasePrice: asset.purchase_price || asset.purchasePrice || 0,
+          warrantyExpiry: asset.warranty_expiry || asset.warrantyExpiry || '2025-01-01',
+          amcExpiry: asset.amc_expiry || asset.amcExpiry || '2026-01-01',
+          lifecycle: asset.status === 'active' ? 'Active' : asset.status === 'maintenance' ? 'Maintenance' : 'Mature',
+          depreciation: Math.round((asset.purchase_price || asset.purchasePrice || 0) * 0.15),
+          currentValue: Math.round((asset.purchase_price || asset.purchasePrice || 0) * 0.85),
+        }))
+        
+        // Use API data, no fallback dummy data
+        setAssets(assetsData)
+        
+        console.log('✅ Assets fetched from API:', assetsData.length, assetsData.map(a => a.name))
+      } catch (error) {
+        console.error('❌ Error fetching assets:', error)
+        // Fallback ke hardcoded jika API error
+        setAssets([
+          {
+            id: 1,
+            name: 'CNC Machining Center A',
+            purchaseDate: '2022-01-15',
+            purchasePrice: 500000,
+            warrantyExpiry: '2025-01-15',
+            amcExpiry: '2026-06-15',
+            lifecycle: 'Active',
+            depreciation: 75000,
+            currentValue: 425000,
+          },
+          {
+            id: 2,
+            name: 'Hydraulic Press B',
+            purchaseDate: '2020-06-20',
+            purchasePrice: 250000,
+            warrantyExpiry: '2022-06-20',
+            amcExpiry: '2026-12-31',
+            lifecycle: 'Mature',
+            depreciation: 100000,
+            currentValue: 150000,
+          },
+          {
+            id: 3,
+            name: 'Air Compressor System',
+            purchaseDate: '2024-03-10',
+            purchasePrice: 75000,
+            warrantyExpiry: '2026-03-10',
+            amcExpiry: '2027-03-10',
+            lifecycle: 'New',
+            depreciation: 5625,
+            currentValue: 69375,
+          },
+          {
+            id: 4,
+            name: 'Excavator CAT 390F',
+            purchaseDate: '2021-05-12',
+            purchasePrice: 2500000,
+            warrantyExpiry: '2024-05-12',
+            amcExpiry: '2026-05-12',
+            lifecycle: 'Active',
+            depreciation: 400000,
+            currentValue: 2100000,
+          },
+          {
+            id: 5,
+            name: 'Dredger KIP-3000',
+            purchaseDate: '2019-08-08',
+            purchasePrice: 7500000,
+            warrantyExpiry: '2021-08-08',
+            amcExpiry: '2026-08-08',
+            lifecycle: 'Mature',
+            depreciation: 3000000,
+            currentValue: 4500000,
+          },
+          {
+            id: 6,
+            name: 'Power Station 5MW',
+            purchaseDate: '2020-11-20',
+            purchasePrice: 5000000,
+            warrantyExpiry: '2023-11-20',
+            amcExpiry: '2027-11-20',
+            lifecycle: 'Active',
+            depreciation: 1250000,
+            currentValue: 3750000,
+          },
+          {
+            id: 7,
+            name: 'Smelter Plant',
+            purchaseDate: '2018-03-15',
+            purchasePrice: 12500000,
+            warrantyExpiry: '2020-03-15',
+            amcExpiry: '2026-03-15',
+            lifecycle: 'Mature',
+            depreciation: 5000000,
+            currentValue: 7500000,
+          },
+          {
+            id: 8,
+            name: 'Forklift FL-001',
+            purchaseDate: '2023-06-10',
+            purchasePrice: 150000,
+            warrantyExpiry: '2025-06-10',
+            amcExpiry: '2026-06-10',
+            lifecycle: 'Active',
+            depreciation: 15000,
+            currentValue: 135000,
+          },
+          {
+            id: 9,
+            name: 'Conveyor Belt System',
+            purchaseDate: '2021-09-05',
+            purchasePrice: 800000,
+            warrantyExpiry: '2024-09-05',
+            amcExpiry: '2026-09-05',
+            lifecycle: 'Active',
+            depreciation: 200000,
+            currentValue: 600000,
+          },
+          {
+            id: 10,
+            name: 'Water Treatment Plant',
+            purchaseDate: '2020-01-30',
+            purchasePrice: 3000000,
+            warrantyExpiry: '2023-01-30',
+            amcExpiry: '2027-01-30',
+            lifecycle: 'Active',
+            depreciation: 750000,
+            currentValue: 2250000,
+          },
+          {
+            id: 11,
+            name: 'Grinding Mill Unit',
+            purchaseDate: '2022-04-12',
+            purchasePrice: 1500000,
+            warrantyExpiry: '2025-04-12',
+            amcExpiry: '2026-10-12',
+            lifecycle: 'Active',
+            depreciation: 225000,
+            currentValue: 1275000,
+          },
+          {
+            id: 12,
+            name: 'Boiler System',
+            purchaseDate: '2019-07-20',
+            purchasePrice: 2000000,
+            warrantyExpiry: '2021-07-20',
+            amcExpiry: '2026-07-20',
+            lifecycle: 'Mature',
+            depreciation: 800000,
+            currentValue: 1200000,
+          },
+        ])
+      }
+    }
+    
+    fetchAssets()
+    
+    // Load maintenance data (using hardcoded for now)
+    const maintenanceData = [
+      {
+        id: 1,
+        asset: 'CNC Machining Center A',
+        type: 'Preventive',
+        date: '2026-04-05',
+        technician: 'Technician 1',
+        status: 'Completed',
+        cost: 5000,
+        downtime: 120,
+        description: 'Regular maintenance & lubrication',
+        nextDate: '2026-07-05',
+      },
+      {
+        id: 2,
+        asset: 'Hydraulic Press B',
+        type: 'Corrective',
+        date: '2026-04-06',
+        technician: 'Technician 2',
+        status: 'Completed',
+        cost: 7500,
+        downtime: 240,
+        description: 'Valve replacement',
+        nextDate: '2026-10-06',
+      },
+      {
+        id: 3,
+        asset: 'Air Compressor System',
+        type: 'Preventive',
+        date: '2026-04-07',
+        technician: 'Technician 1',
+        status: 'Pending',
+        cost: 3000,
+        downtime: 60,
+        description: 'Oil and filter change',
+        nextDate: '2026-07-07',
+      },
+      {
+        id: 4,
+        asset: 'Excavator CAT 390F',
+        type: 'Preventive',
+        date: '2026-04-10',
+        technician: 'Technician 3',
+        status: 'Scheduled',
+        cost: 12500,
+        downtime: 180,
+        description: 'Engine inspection and calibration',
+        nextDate: '2026-07-10',
+      },
+      {
+        id: 5,
+        asset: 'Dredger KIP-3000',
+        type: 'Corrective',
+        date: '2026-04-08',
+        technician: 'Technician 4',
+        status: 'Scheduled',
+        cost: 37500,
+        downtime: 480,
+        description: 'Hydraulic pump replacement',
+        nextDate: '2026-10-08',
+      },
+      {
+        id: 6,
+        asset: 'Power Station 5MW',
+        type: 'Preventive',
+        date: '2026-04-01',
+        technician: 'Technician 2',
+        status: 'Completed',
+        cost: 25000,
+        downtime: 240,
+        description: 'Turbine blade inspection',
+        nextDate: '2026-07-01',
+      },
+      {
+        id: 7,
+        asset: 'Smelter Plant',
+        type: 'Preventive',
+        date: '2026-03-15',
+        technician: 'Technician 5',
+        status: 'Completed',
+        cost: 62500,
+        downtime: 720,
+        description: 'Complete furnace cleaning',
+        nextDate: '2026-09-15',
+      },
+      {
+        id: 8,
+        asset: 'Forklift FL-001',
+        type: 'Preventive',
+        date: '2026-04-04',
+        technician: 'Technician 3',
+        status: 'Completed',
+        cost: 2500,
+        downtime: 90,
+        description: 'Battery inspection & fluid check',
+        nextDate: '2026-06-04',
+      },
+      {
+        id: 9,
+        asset: 'Conveyor Belt System',
+        type: 'Preventive',
+        date: '2026-04-12',
+        technician: 'Technician 1',
+        status: 'Pending',
+        cost: 8000,
+        downtime: 120,
+        description: 'Belt tension adjustment',
+        nextDate: '2026-07-12',
+      },
+      {
+        id: 10,
+        asset: 'Water Treatment Plant',
+        type: 'Corrective',
+        date: '2026-04-11',
+        technician: 'Technician 4',
+        status: 'Scheduled',
+        cost: 15000,
+        downtime: 360,
+        description: 'Filter membrane replacement',
+        nextDate: '2026-07-11',
+      },
+      {
+        id: 11,
+        asset: 'Grinding Mill Unit',
+        type: 'Preventive',
+        date: '2026-04-09',
+        technician: 'Technician 5',
+        status: 'Scheduled',
+        cost: 10000,
+        downtime: 150,
+        description: 'Ball mill bearing replacement',
+        nextDate: '2026-07-09',
+      },
+      {
+        id: 12,
+        asset: 'Boiler System',
+        type: 'Preventive',
+        date: '2026-04-02',
+        technician: 'Technician 2',
+        status: 'Completed',
+        cost: 20000,
+        downtime: 300,
+        description: 'Scale removal & tube cleaning',
+        nextDate: '2026-07-02',
+      },
+      {
+        id: 13,
+        asset: 'CNC Machining Center A',
+        type: 'Preventive',
+        date: '2026-03-05',
+        technician: 'Technician 1',
+        status: 'Completed',
+        cost: 5000,
+        downtime: 120,
+        description: 'Spindle calibration',
+        nextDate: '2026-06-05',
+      },
+      {
+        id: 14,
+        asset: 'Hydraulic Press B',
+        type: 'Preventive',
+        date: '2026-02-10',
+        technician: 'Technician 2',
+        status: 'Completed',
+        cost: 6000,
+        downtime: 180,
+        description: 'Pressure seal replacement',
+        nextDate: '2026-05-10',
+      },
+    ]
+    
+    setMaintenanceLogs(maintenanceData)
+    setFilteredLogs(maintenanceData)
+    setLoading(false)
+    
+    console.log('✅ Maintenance logs loaded:', maintenanceData.length)
   }, [])
 
   useEffect(() => {
@@ -140,21 +400,69 @@ export default function MaintenancePage() {
 
   const handleAddMaintenance = (e) => {
     e.preventDefault()
-    const newLog = {
-      id: maintenanceLogs.length + 1,
-      asset: formData.asset,
-      type: formData.type.charAt(0).toUpperCase() + formData.type.slice(1),
-      date: new Date().toISOString().split('T')[0],
-      technician: formData.technician,
-      status: 'Scheduled',
-      cost: parseInt(formData.cost),
-      downtime: 0,
-      description: formData.description,
-      nextDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    
+    // Reset previous messages
+    setFormError(null)
+    setFormSuccess(false)
+    
+    // Validation
+    if (!formData.asset || formData.asset.trim() === '') {
+      setFormError('❌ Asset harus dipilih')
+      return
     }
-    setMaintenanceLogs([...maintenanceLogs, newLog])
-    setFormData({ asset: '', type: 'preventive', technician: '', cost: '', description: '' })
-    setShowAddForm(false)
+    
+    if (!formData.technician || formData.technician.trim() === '') {
+      setFormError('❌ Nama technician harus diisi')
+      return
+    }
+    
+    if (!formData.cost || formData.cost === '' || parseInt(formData.cost) < 0) {
+      setFormError('❌ Biaya harus diisi dengan nilai yang valid')
+      return
+    }
+    
+    try {
+      setFormSubmitting(true)
+      
+      const newLog = {
+        id: maintenanceLogs.length + 1,
+        asset: formData.asset,
+        type: formData.type.charAt(0).toUpperCase() + formData.type.slice(1),
+        date: new Date().toISOString().split('T')[0],
+        technician: formData.technician,
+        status: 'Scheduled',
+        cost: parseInt(formData.cost),
+        downtime: 0,
+        description: formData.description || '-',
+        nextDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      }
+      
+      // Update state with new log
+      const updatedLogs = [...maintenanceLogs, newLog]
+      setMaintenanceLogs(updatedLogs)
+      setFilteredLogs(updatedLogs)
+      
+      // Reset form
+      setFormData({ asset: '', type: 'preventive', technician: '', cost: '', description: '' })
+      setFormSuccess(true)
+      
+      // Hide success message after 3 seconds
+      setTimeout(() => {
+        setFormSuccess(false)
+      }, 3000)
+      
+      // Close form after 1.5 seconds
+      setTimeout(() => {
+        setShowAddForm(false)
+      }, 1500)
+      
+      console.log('✅ Maintenance log added:', newLog)
+    } catch (err) {
+      console.error('❌ Error adding maintenance log:', err)
+      setFormError('❌ Terjadi kesalahan saat menyimpan: ' + err.message)
+    } finally {
+      setFormSubmitting(false)
+    }
   }
 
   const getStatusColor = (status) => {
@@ -549,20 +857,44 @@ export default function MaintenancePage() {
       {/* Add Maintenance Form */}
       {showAddForm && (
         <div className="bg-white rounded-lg shadow p-6 mt-8">
-          <h2 className="text-xl font-bold mb-4">Log New Maintenance</h2>
+          <h2 className="text-xl font-bold mb-4">📋 Log New Maintenance</h2>
+          
+          {/* Error Message */}
+          {formError && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+              {formError}
+            </div>
+          )}
+          
+          {/* Success Message */}
+          {formSuccess && (
+            <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+              ✓ Maintenance log berhasil disimpan!
+            </div>
+          )}
+          
           <form onSubmit={handleAddMaintenance} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Asset</label>
+              <label className="block text-sm font-medium mb-2">Asset <span className="text-red-600">*</span> <span className="text-xs text-gray-500">({assets.length} tersedia)</span></label>
               <select
-                required
                 value={formData.asset}
-                onChange={(e) => setFormData({ ...formData, asset: e.target.value })}
-                className="w-full border rounded-lg px-4 py-2"
+                onChange={(e) => {
+                  console.log('Asset selected:', e.target.value)
+                  setFormData({ ...formData, asset: e.target.value })
+                }}
+                className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-600"
+                disabled={formSubmitting}
               >
-                <option value="">Select asset...</option>
-                {assets.map(a => (
-                  <option key={a.id} value={a.name}>{a.name}</option>
-                ))}
+                <option value="">-- Pilih Asset ({assets.length} tersedia) --</option>
+                {assets && assets.length > 0 ? (
+                  assets.map(a => (
+                    <option key={a.id} value={a.name}>
+                      [{a.id}] {a.name}
+                    </option>
+                  ))
+                ) : (
+                  <option disabled>Tidak ada asset</option>
+                )}
               </select>
             </div>
             <div>
@@ -570,57 +902,65 @@ export default function MaintenancePage() {
               <select
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                className="w-full border rounded-lg px-4 py-2"
+                className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-600"
+                disabled={formSubmitting}
               >
                 <option value="preventive">Preventive</option>
                 <option value="corrective">Corrective</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Technician</label>
+              <label className="block text-sm font-medium mb-2">Technician <span className="text-red-600">*</span></label>
               <input
                 type="text"
-                required
-                placeholder="Technician name..."
+                placeholder="Nama technician..."
                 value={formData.technician}
                 onChange={(e) => setFormData({ ...formData, technician: e.target.value })}
-                className="w-full border rounded-lg px-4 py-2"
+                className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-600"
+                disabled={formSubmitting}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Cost</label>
+              <label className="block text-sm font-medium mb-2">Cost <span className="text-red-600">*</span></label>
               <input
                 type="number"
-                required
                 placeholder="0"
                 value={formData.cost}
                 onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
-                className="w-full border rounded-lg px-4 py-2"
+                min="0"
+                className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-600"
+                disabled={formSubmitting}
               />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium mb-2">Description</label>
+              <label className="block text-sm font-medium mb-2">Description (Optional)</label>
               <textarea
-                required
-                placeholder="Maintenance description..."
+                placeholder="Deskripsi maintenance..."
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full border rounded-lg px-4 py-2 h-24"
+                className="w-full border rounded-lg px-4 py-2 h-24 focus:outline-none focus:ring-2 focus:ring-primary-600"
+                disabled={formSubmitting}
               />
             </div>
             <div className="md:col-span-2 flex gap-3">
               <button
                 type="submit"
-                className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition"
+                disabled={formSubmitting}
+                className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition disabled:bg-primary-400 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                Log Maintenance
+                {formSubmitting ? '⏳ Menyimpan...' : '💾 Log Maintenance'}
               </button>
               <button
                 type="button"
-                onClick={() => setShowAddForm(false)}
-                className="bg-gray-300 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-400 transition"
+                onClick={() => {
+                  setShowAddForm(false)
+                  setFormError(null)
+                  setFormSuccess(false)
+                }}
+                disabled={formSubmitting}
+                className="bg-gray-300 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-400 transition disabled:bg-gray-200 disabled:cursor-not-allowed"
               >
-                Cancel
+                Batal
               </button>
             </div>
           </form>
