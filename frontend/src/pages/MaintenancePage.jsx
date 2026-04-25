@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import api from '../services/api'
 
 export default function MaintenancePage() {
   const [activeTab, setActiveTab] = useState('overview')
@@ -26,14 +27,12 @@ export default function MaintenancePage() {
     // Fetch assets from API
     const fetchAssets = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/assets?limit=100')
-        const data = await response.json()
+        const response = await api.get('/assets?limit=100')
+        const data = response.data
         
-        // Handle Axios wrapping (response.data.items structure)
+        // Handle response structure
         let assetList = []
-        if (data.data && data.data.items && Array.isArray(data.data.items)) {
-          assetList = data.data.items
-        } else if (data.items && Array.isArray(data.items)) {
+        if (data.items && Array.isArray(data.items)) {
           assetList = data.items
         } else if (Array.isArray(data)) {
           assetList = data
@@ -889,7 +888,7 @@ export default function MaintenancePage() {
                 {assets && assets.length > 0 ? (
                   assets.map(a => (
                     <option key={a.id} value={a.name}>
-                      [{a.id}] {a.name}
+                      {a.name}
                     </option>
                   ))
                 ) : (
