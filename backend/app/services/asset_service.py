@@ -68,13 +68,12 @@ class AssetService:
                 )
 
         # Create asset with generated ID
-        asset_data = asset_in.model_dump()
-        asset_data["id"] = str(uuid4())
-        asset_data["created_by"] = user_id
+        asset_id = str(uuid4())
 
         asset = self.repository.create(
-            AssetCreate(**asset_data),
-            **{"id": asset_data["id"], "created_by": user_id},
+            asset_in,
+            id=asset_id,
+            created_by=user_id,
         )
         return AssetResponse.from_orm(asset)
 

@@ -1,7 +1,8 @@
-import { useState, useContext } from 'react'
+import { useState, useContext, useEffect } from 'react'
 import { AuthContext } from '../context/AuthContext'
 import { LanguageContext } from '../context/LanguageContext'
 import AssetFormModal from '../components/AssetFormModal'
+import { assetService } from '../services/assetService'
 
 export default function AssetsPage() {
   const { user } = useContext(AuthContext)
@@ -14,53 +15,259 @@ export default function AssetsPage() {
   const [showAssetForm, setShowAssetForm] = useState(false)
   const [editingAsset, setEditingAsset] = useState(null)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
+  const [assets, setAssets] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState(null)
 
   // Check if user is admin or engineer
   const isAdmin = user?.role?.name === 'admin' || user?.role?.name === 'Admin' || user?.role?.name === 'engineer' || user?.role?.name === 'Engineer'
 
+  // Fetch assets from API
+  useEffect(() => {
+    const fetchAssets = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        
+        console.log('📡 Fetching assets from API...')
+        const response = await assetService.getAssets({ skip: 0, limit: 100 })
+        
+        console.log('📦 Response received:', response)
+        
+        // Handle both direct array and paginated response
+        let assetList = []
+        if (response && typeof response === 'object') {
+          if (Array.isArray(response)) {
+            // Direct array response
+            assetList = response
+            console.log('✅ Response is direct array, count:', assetList.length)
+          } else if (response.data && response.data.items && Array.isArray(response.data.items)) {
+            // Axios response with data wrapper (paginated)
+            assetList = response.data.items
+            console.log('✅ Response is paginated (via response.data), count:', assetList.length, 'total:', response.data.total)
+          } else if (response.items && Array.isArray(response.items)) {
+            // Direct paginated response (fallback)
+            assetList = response.items
+            console.log('✅ Response is paginated (direct), count:', assetList.length, 'total:', response.total)
+          } else {
+            console.warn('⚠️ Response format unexpected:', Object.keys(response))
+            if (response.data) {
+              console.warn('   Data keys:', Object.keys(response.data))
+            }
+            assetList = []
+          }
+        }
+        
+        console.log('📊 Setting assets:', assetList.length, 'items')
+        setAssets(assetList)
+        
+        if (assetList.length === 0) {
+          console.warn('⚠️ No assets returned from API')
+        }
+      } catch (err) {
+        console.error('❌ Error fetching assets:', err)
+        console.error('   Message:', err.message)
+        console.error('   Response:', err.response)
+        setError(err.message || 'Gagal mengambil data asset')
+        setAssets([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchAssets()
+  }, [refreshTrigger])
+
+  // Helper function to format value for display
+  const formatValue = (value) => {
+    if (!value) return '-'
+    if (typeof value === 'string') return value
+    const num = parseFloat(value)
+    if (num >= 1000000) return `Rp ${(num / 1000000).toFixed(1)} Miliar`
+    if (num >= 1000) return `Rp ${(num / 1000).toFixed(1)} Juta`
+    return `Rp ${num.toLocaleString('id-ID')}`
+  }
+
+  // Helper function to organize assets by type
+  const organizeAssetsByType = (assetList) => {
+    console.log('🔄 Organizing', assetList.length, 'assets by type')
+    
+    const organized = {
+      mining: [],
+      processing: [],
+      infrastructure: [],
+      fleet: [],
+      land: [],
+      digital: [],
+      it: [],
+      inventory: [],
+      environmental: [],
+    }
+
+    assetList.forEach((asset, idx) => {
+      const type = (asset.type || '').toLowerCase()
+      const name = (asset.name || '').toLowerCase()
+      const location = (asset.location || '').toLowerCase()
+      
+      console.log(`  Asset ${idx + 1}: type="${asset.type}", name="${asset.name}"`)
+      
+      let categorized = false
+      
+      // Check type field
+      if (type.includes('machinery') || type.includes('equipment') || type.includes('excavator') || 
+          type.includes('drill') || type.includes('mining') || type.includes('crusher') ||
+          type.includes('motor') || type.includes('cnc') || type.includes('machine')) {
+        organized.mining.push(asset)
+        categorized = true
+      } 
+      else if (type.includes('processing') || type.includes('smelter') || type.includes('furnace')) {
+        organized.processing.push(asset)
+        categorized = true
+      } 
+      else if (type.includes('infrastructure') || type.includes('warehouse') || type.includes('workshop') ||
+               type.includes('building') || type.includes('facility')) {
+        organized.infrastructure.push(asset)
+        categorized = true
+      } 
+      else if (type.includes('vehicle') || type.includes('truck') || type.includes('bus') || 
+               type.includes('car') || type.includes('fleet')) {
+        organized.fleet.push(asset)
+        categorized = true
+      } 
+      else if (type.includes('land') || type.includes('concession') || type.includes('property')) {
+        organized.land.push(asset)
+        categorized = true
+      } 
+      else if (type.includes('digital') || type.includes('software') || type.includes('license') ||
+               type.includes('application')) {
+        organized.digital.push(asset)
+        categorized = true
+      } 
+      else if (type.includes('it') || type.includes('server') || type.includes('computer') ||
+               type.includes('network') || type.includes('hardware')) {
+        organized.it.push(asset)
+        categorized = true
+      } 
+      else if (type.includes('inventory') || type.includes('consumable') || type.includes('supply') ||
+               type.includes('material') || type.includes('stock')) {
+        organized.inventory.push(asset)
+        categorized = true
+      } 
+      else if (type.includes('environmental') || type.includes('treatment') || type.includes('water') ||
+               type.includes('waste')) {
+        organized.environmental.push(asset)
+        categorized = true
+      }
+      
+      // If not categorized, put in mining as default
+      if (!categorized) {
+        console.log(`    → Categorized as: mining (default)`)
+        organized.mining.push(asset)
+      }
+    })
+    
+    console.log('📊 Organization complete:', Object.entries(organized).map(([k, v]) => `${k}: ${v.length}`).join(', '))
+    return organized
+  }
+
+  const organizedAssets = organizeAssetsByType(assets)
+
+  // Delete asset handler
+  const handleDeleteAsset = async (assetId) => {
+    try {
+      setDeleting(true)
+      setDeleteError(null)
+      console.log('🗑️ Deleting asset:', assetId)
+      
+      await assetService.deleteAsset(assetId)
+      
+      console.log('✅ Asset deleted successfully')
+      // Remove from state
+      setAssets(assets.filter(a => a.id !== assetId))
+      setDeleteConfirm(null)
+      setRefreshTrigger(prev => prev + 1)
+      
+      // Show success message via refresh
+    } catch (err) {
+      console.error('❌ Error deleting asset:', err)
+      setDeleteError(err.message || 'Failed to delete asset')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  // Build dynamic categories with counts from API data
   const assetCategories = [
-    { id: 'mining', name: '⛏️ Mining Equipment', count: 5, value: '$8.2M' },
-    { id: 'processing', name: '🏭 Processing Facilities', count: 3, value: '$18.5M' },
-    { id: 'infrastructure', name: '🏗️ Infrastructure', count: 4, value: '$2.4M' },
-    { id: 'fleet', name: '🚚 Fleet & Vehicles', count: 5, value: '$3.9M' },
-    { id: 'land', name: '🗺️ Land & Concessions', count: 3, value: '$12M+' },
-    { id: 'digital', name: '💾 Digital Assets', count: 6, value: '$3.5M' },
-    { id: 'it', name: '💻 IT Infrastructure', count: 6, value: '$180K' },
-    { id: 'inventory', name: '📦 Consumables', count: 6, value: '$869K' },
-    { id: 'environmental', name: '🌱 Environmental', count: 5, value: '$2.5M+' },
+    { id: 'mining', name: '⛏️ Mining Equipment', count: organizedAssets.mining.length, value: '' },
+    { id: 'processing', name: '🏭 Processing Facilities', count: organizedAssets.processing.length, value: '' },
+    { id: 'infrastructure', name: '🏗️ Infrastructure', count: organizedAssets.infrastructure.length, value: '' },
+    { id: 'fleet', name: '🚚 Fleet & Vehicles', count: organizedAssets.fleet.length, value: '' },
+    { id: 'land', name: '🗺️ Land & Concessions', count: organizedAssets.land.length, value: '' },
+    { id: 'digital', name: '💾 Digital Assets', count: organizedAssets.digital.length, value: '' },
+    { id: 'it', name: '💻 IT Infrastructure', count: organizedAssets.it.length, value: '' },
+    { id: 'inventory', name: '📦 Consumables', count: organizedAssets.inventory.length, value: '' },
+    { id: 'environmental', name: '🌱 Environmental', count: organizedAssets.environmental.length, value: '' },
   ]
 
-  const miningEquipment = [
-    { id: 'EQP-001', name: 'Excavator CAT 390F', type: 'Excavator', location: 'Block Alpha', value: '$1.05M', status: '🟢 Operational', hours: 8500 },
-    { id: 'EQP-002', name: 'Dozer Komatsu D455AX', type: 'Bulldozer', location: 'Block Beta', value: '$840K', status: '🟢 Operational', hours: 12400 },
-    { id: 'EQP-003', name: 'Dump Truck Volvo FMX', type: 'Haul Truck', location: 'Transport Route', value: '$337K', status: '🟢 Operational', hours: 5200 },
-    { id: 'EQP-004', name: 'Dredger KIP-3000 (Offshore)', type: 'Dredger', location: 'Block Delta', value: '$5.95M', status: '🟡 Maintenance Required', capacity: '3000 t/h' },
-    { id: 'EQP-005', name: 'Drill Rig Atlas Copco D9-13', type: 'Drill', location: 'Block Alpha', value: '$455K', status: '🟢 Operational', depth: '300m' },
-  ]
+  // Use API data if available, otherwise empty fallback
+  const miningEquipment = organizedAssets.mining
+  const processingFacilities = organizedAssets.processing
+  const infrastructure = organizedAssets.infrastructure
+  const fleet = organizedAssets.fleet
+  const land = organizedAssets.land
+  const digital = organizedAssets.digital
+  const itAssets = organizedAssets.it
+  const consumables = organizedAssets.inventory
+  const environmental = organizedAssets.environmental
 
-  const processingFacilities = [
-    { id: 'FAC-001', name: 'Tin Smelter Plant', type: 'Smelter/Furnace', location: 'Block Omega', value: '$7.2M', status: '🟡 Scheduled Maintenance', capacity: '250 tpd', efficiency: '94.5%' },
-    { id: 'FAC-002', name: 'Concentration Plant', type: 'Flotation Circuit', location: 'Block Omega', value: '$2.28M', status: '🟢 Operational', capacity: '500 tpd', recovery: '97.2%' },
-    { id: 'FAC-003', name: 'Slurry Storage Tanks', type: 'Storage', location: 'Storage Area', value: '$1.57M', status: '🟡 Inspection Due', capacity: '50,000 m³', content: 'Tin concentrate' },
-  ]
-
-  const infrastructure = [
-    { id: 'INF-001', name: 'Main Warehouse', type: 'Warehouse', area: '5,000 m²', value: '$840K', status: '🟢 Good', utilization: '78%' },
-    { id: 'INF-002', name: 'Maintenance Workshop', type: 'Workshop', area: '2,500 m²', value: '$480K', status: '🟡 Roof Maintenance Needed', bays: 6 },
-    { id: 'INF-003', name: 'Power Station (5MW)', type: 'Power Generator', location: 'Utility Block', value: '$595K', status: '🟢 Good', capacity: '5 MW' },
-    { id: 'INF-004', name: 'Port & Jetty', type: 'Port Facility', location: 'Offshore 5km', value: '$2.75M', status: '🟡 Structural Inspection Due', throughput: '500k tonnes/yr' },
-  ]
+  // Map category IDs to data
+  const categoryDataMap = {
+    mining: miningEquipment,
+    processing: processingFacilities,
+    infrastructure: infrastructure,
+    fleet: fleet,
+    land: land,
+    digital: digital,
+    it: itAssets,
+    inventory: consumables,
+    environmental: environmental,
+  }
 
   const stats = {
-    totalAssets: 38,
-    totalValue: '$28.7M',
+    totalAssets: assets.length,
+    totalValue: 'Rp ' + (assets.reduce((sum, a) => sum + (parseFloat(a.value) || 0), 0) / 1000000000).toFixed(1) + ' Miliar',
     categories: 9,
-    activeStatus: '32',
-    maintenanceRequired: '4',
-    offlineCount: '2',
+    activeStatus: assets.filter(a => a.status === 'active').length,
+    maintenanceRequired: assets.filter(a => a.status === 'maintenance').length,
+    offlineCount: assets.filter(a => a.status === 'inactive').length,
   }
 
   const renderContent = () => {
+    // Show loading state
+    if (loading) {
+      return (
+        <div className="flex justify-center items-center py-12">
+          <div className="text-center">
+            <div className="animate-spin text-4xl mb-4">⏳</div>
+            <p className="text-gray-600">Mengambil data asset...</p>
+          </div>
+        </div>
+      )
+    }
+
+    // Show error state
+    if (error && assets.length === 0) {
+      return (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-red-700">
+          <p className="font-bold">Gagal mengambil data asset</p>
+          <p className="text-sm mt-2">{error}</p>
+        </div>
+      )
+    }
+
     if (activeTab === 'overview') {
       return (
         <div className="space-y-6">
@@ -107,9 +314,7 @@ export default function AssetsPage() {
 
     if (activeTab === 'by-category') {
       const filteredList = filterCategory === 'all' ? miningEquipment : 
-                          filterCategory === 'mining' ? miningEquipment :
-                          filterCategory === 'processing' ? processingFacilities :
-                          filterCategory === 'infrastructure' ? infrastructure : []
+                          categoryDataMap[filterCategory] || []
       
       return (
         <div className="space-y-4">
@@ -119,9 +324,15 @@ export default function AssetsPage() {
               onChange={(e) => setFilterCategory(e.target.value)}
               className="border rounded-lg px-4 py-2"
             >
-              <option value="mining">Mining Equipment</option>
-              <option value="processing">Processing Facilities</option>
-              <option value="infrastructure">Infrastructure</option>
+              <option value="mining">⛏️ Mining Equipment</option>
+              <option value="processing">🏭 Processing Facilities</option>
+              <option value="infrastructure">🏗️ Infrastructure</option>
+              <option value="fleet">🚚 Fleet & Vehicles</option>
+              <option value="land">🗺️ Land & Concessions</option>
+              <option value="digital">💾 Digital Assets</option>
+              <option value="it">💻 IT Infrastructure</option>
+              <option value="inventory">📦 Consumables</option>
+              <option value="environmental">🌱 Environmental</option>
             </select>
             <div className="flex gap-2 flex-wrap">
               {isAdmin && (
@@ -163,16 +374,27 @@ export default function AssetsPage() {
                       <td className="px-6 py-4 cursor-pointer" onClick={() => setSelectedAsset(asset)}>{asset.status}</td>
                       {isAdmin && (
                         <td className="px-6 py-4">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setEditingAsset(asset)
-                              setShowAssetForm(true)
-                            }}
-                            className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
-                          >
-                            ✏️ {t('assets.edit')}
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setEditingAsset(asset)
+                                setShowAssetForm(true)
+                              }}
+                              className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
+                            >
+                              ✏️ {t('assets.edit')}
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setDeleteConfirm(asset)
+                              }}
+                              className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs"
+                            >
+                              🗑️ {t('assets.delete')}
+                            </button>
+                          </div>
                         </td>
                       )}
                     </tr>
@@ -189,7 +411,7 @@ export default function AssetsPage() {
                   onClick={() => setSelectedAsset(asset)}
                 >
                   {isAdmin && (
-                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition">
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition flex gap-1">
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
@@ -199,6 +421,15 @@ export default function AssetsPage() {
                         className="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
                       >
                         ✏️ {t('assets.edit')}
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setDeleteConfirm(asset)
+                        }}
+                        className="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs"
+                      >
+                        🗑️ {t('assets.delete')}
                       </button>
                     </div>
                   )}
@@ -222,10 +453,10 @@ export default function AssetsPage() {
         <div className="space-y-4">
           <h3 className="text-lg font-bold mb-4">Maintenance Schedule & History</h3>
           {[
-            { asset: 'Excavator CAT 390F', nextDue: '2026-04-10', status: 'On Schedule', cost: '$2,500' },
-            { asset: 'Dredger KIP-3000', nextDue: '2026-04-28', status: 'Due Soon', cost: '$15,000' },
-            { asset: 'Power Station 5MW', nextDue: '2026-04-01', status: 'Critical', cost: '$8,500' },
-            { asset: 'Smelter Plant', nextDue: '2026-06-15', status: 'Scheduled', cost: '$25,000' },
+            { asset: 'Excavator CAT 390F', nextDue: '2026-04-10', status: 'On Schedule', cost: 'Rp 37.5 Juta' },
+            { asset: 'Dredger KIP-3000', nextDue: '2026-04-28', status: 'Due Soon', cost: 'Rp 225 Juta' },
+            { asset: 'Power Station 5MW', nextDue: '2026-04-01', status: 'Critical', cost: 'Rp 127.5 Juta' },
+            { asset: 'Smelter Plant', nextDue: '2026-06-15', status: 'Scheduled', cost: 'Rp 375 Juta' },
           ].map((item, idx) => (
             <div key={idx} className="bg-white rounded-lg shadow p-4 border-l-4 border-primary-600">
               <div className="flex justify-between items-center">
@@ -252,20 +483,20 @@ export default function AssetsPage() {
           <h3 className="text-lg font-bold">Asset Depreciation & Financial Tracking</h3>
           <div className="bg-white rounded-lg shadow p-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div><strong>Total Purchase Value:</strong> <p className="text-xl font-bold text-primary-600">$42.5M</p></div>
-              <div><strong>Current Net Value:</strong> <p className="text-xl font-bold text-blue-600">$28.7M</p></div>
-              <div><strong>Total Depreciation:</strong> <p className="text-xl font-bold text-red-600">$13.8M</p></div>
+              <div><strong>Total Purchase Value:</strong> <p className="text-xl font-bold text-primary-600">Rp 637.5 Miliar</p></div>
+              <div><strong>Current Net Value:</strong> <p className="text-xl font-bold text-blue-600">Rp 430.5 Miliar</p></div>
+              <div><strong>Total Depreciation:</strong> <p className="text-xl font-bold text-red-600">Rp 207 Miliar</p></div>
               <div><strong>Depreciation Rate:</strong> <p className="text-xl font-bold">32.4%</p></div>
             </div>
             
             <h4 className="font-bold mb-3">YTD Maintenance Costs by Category</h4>
             {[
-              { category: 'Mining Equipment', amount: '$145,000', percent: 30 },
-              { category: 'Processing Facilities', amount: '$98,000', percent: 20 },
-              { category: 'Fleet Vehicles', amount: '$78,500', percent: 16 },
-              { category: 'Infrastructure', amount: '$89,800', percent: 19 },
-              { category: 'IT Systems', amount: '$12,000', percent: 2 },
-              { category: 'Other', amount: '$61,000', percent: 13 },
+              { category: 'Mining Equipment', amount: 'Rp 2.175 Miliar', percent: 30 },
+              { category: 'Processing Facilities', amount: 'Rp 1.47 Miliar', percent: 20 },
+              { category: 'Fleet Vehicles', amount: 'Rp 1.177 Miliar', percent: 16 },
+              { category: 'Infrastructure', amount: 'Rp 1.347 Miliar', percent: 19 },
+              { category: 'IT Systems', amount: 'Rp 180 Juta', percent: 2 },
+              { category: 'Other', amount: 'Rp 915 Juta', percent: 13 },
             ].map((item, idx) => (
               <div key={idx} className="mb-3">
                 <div className="flex justify-between mb-1">
@@ -321,16 +552,27 @@ export default function AssetsPage() {
             </div>
             <div className="flex gap-3 mt-6">
               {isAdmin && (
-                <button
-                  onClick={() => {
-                    setEditingAsset(selectedAsset)
-                    setShowAssetForm(true)
-                    setSelectedAsset(null)
-                  }}
-                  className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-                >
-                  ✏️ {t('assets.editAsset')}
-                </button>
+                <>
+                  <button
+                    onClick={() => {
+                      setEditingAsset(selectedAsset)
+                      setShowAssetForm(true)
+                      setSelectedAsset(null)
+                    }}
+                    className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                  >
+                    ✏️ {t('assets.editAsset')}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setDeleteConfirm(selectedAsset)
+                      setSelectedAsset(null)
+                    }}
+                    className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
+                  >
+                    🗑️ {t('assets.deleteAsset')}
+                  </button>
+                </>
               )}
               <button
                 onClick={() => setSelectedAsset(null)}
@@ -357,6 +599,50 @@ export default function AssetsPage() {
             setEditingAsset(null)
           }}
         />
+      )}
+
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
+            <h2 className="text-2xl font-bold mb-4 text-red-600">🗑️ {t('assets.deleteAsset')}</h2>
+            <p className="text-gray-700 mb-2">{t('assets.deleteConfirm')}</p>
+            <p className="text-gray-600 text-sm mb-6">{t('assets.deleteConfirmMessage')}</p>
+            
+            {deleteError && (
+              <div className="bg-red-50 border border-red-200 rounded p-3 mb-4 text-red-700 text-sm">
+                {deleteError}
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <p className="text-sm font-semibold">
+                <strong>Asset:</strong> {deleteConfirm.name}
+              </p>
+              <p className="text-sm">
+                <strong>Type:</strong> {deleteConfirm.type}
+              </p>
+            </div>
+
+            <div className="flex gap-3 mt-8">
+              <button
+                onClick={() => {
+                  handleDeleteAsset(deleteConfirm.id)
+                }}
+                disabled={deleting}
+                className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed"
+              >
+                {deleting ? '⏳ ' + t('forms.submitting') : '🗑️ ' + t('assets.delete')}
+              </button>
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                disabled={deleting}
+                className="flex-1 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                {t('forms.cancel')}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

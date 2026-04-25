@@ -90,19 +90,33 @@ export default function AssetFormModal({ asset, onClose, onSave, isEdit = false 
 
     try {
       // Convert value to number if it exists
+      // Convert acquisition_date to datetime format (YYYY-MM-DDTHH:MM:SS)
+      let acquisition_date = formData.acquisition_date
+      if (acquisition_date && !acquisition_date.includes('T')) {
+        acquisition_date = `${acquisition_date}T00:00:00`
+      } else if (!acquisition_date) {
+        acquisition_date = null
+      }
+
       const dataToSend = {
         ...formData,
+        acquisition_date,
         value: formData.value ? parseFloat(formData.value) : null,
       }
 
+      console.log('📤 Sending asset data:', dataToSend)
+
+      let response
       if (isEdit && asset?.id) {
         // Update existing asset
-        await assetService.updateAsset(asset.id, dataToSend)
-        setSuccess(t('assets.updateSuccess'))
+        response = await assetService.updateAsset(asset.id, dataToSend)
+        console.log('✏️ Update response:', response)
+        setSuccess('Asset berhasil diperbarui!')
       } else {
         // Create new asset
-        await assetService.createAsset(dataToSend)
-        setSuccess(t('assets.saveSuccess'))
+        response = await assetService.createAsset(dataToSend)
+        console.log('✅ Create response:', response)
+        setSuccess('Asset berhasil ditambahkan!')
       }
 
       if (onSave) {
@@ -111,9 +125,26 @@ export default function AssetFormModal({ asset, onClose, onSave, isEdit = false 
 
       setTimeout(() => onClose(), 1500)
     } catch (err) {
-      const msg = err.response?.data?.detail || err.message || t('assets.errorSaving')
-      setError(`${msg}`)
-      console.error('Error:', err)
+      console.error('❌ Full error object:', err)
+      console.error('❌ Error response:', err.response)
+      console.error('❌ Error message:', err.message)
+      
+      let msg = 'Gagal menyimpan asset'
+      
+      if (err.response?.status === 401) {
+        msg = 'Anda belum login atau sesi telah berakhir. Silakan login kembali.'
+      } else if (err.response?.status === 403) {
+        msg = 'Anda tidak memiliki izin untuk melakukan tindakan ini.'
+      } else if (err.response?.data?.detail) {
+        const detail = err.response.data.detail
+        msg = typeof detail === 'string' ? detail : JSON.stringify(detail)
+      } else if (err.response?.data?.message) {
+        msg = err.response.data.message
+      } else if (err.message) {
+        msg = err.message
+      }
+      
+      setError(msg)
     } finally {
       setLoading(false)
     }
@@ -245,7 +276,7 @@ export default function AssetFormModal({ asset, onClose, onSave, isEdit = false 
               {/* Asset Value */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nilai Asset (USD)
+                  Nilai Asset (IDR)
                 </label>
                 <input
                   type="number"

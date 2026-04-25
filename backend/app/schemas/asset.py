@@ -20,7 +20,7 @@ class AssetBase(BaseModel):
     acquisition_date: Optional[datetime] = Field(None, description="Acquisition date")
     value: Optional[Decimal] = Field(None, ge=0, description="Asset value")
     parent_asset_id: Optional[str] = Field(None, description="Parent asset ID")
-    asset_metadata: Optional[dict] = Field(default={}, description="Custom metadata")
+    asset_metadata: Optional[dict] = Field(default_factory=dict, description="Custom metadata")
 
 
 class AssetCreate(AssetBase):

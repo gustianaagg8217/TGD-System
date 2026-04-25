@@ -59,8 +59,8 @@ class SensorReadingCreate(BaseModel):
         description="UTC timestamp of measurement (ISO 8601 format)"
     )
 
-    class Config:
-        schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "sensor_id": "VIBE-EQP-001",
                 "asset_id": "EQP-001",
@@ -75,6 +75,7 @@ class SensorReadingCreate(BaseModel):
                 "timestamp": "2026-04-07T15:45:32Z"
             }
         }
+    }
 
 
 class SensorReadingResponse(SensorReadingCreate):

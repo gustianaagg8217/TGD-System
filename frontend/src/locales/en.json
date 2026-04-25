@@ -23,7 +23,9 @@
     "financial": "Financial",
     "addAsset": "Add Asset",
     "editAsset": "Edit Asset",
+    "deleteAsset": "Delete Asset",
     "edit": "Edit",
+    "delete": "Delete",
     "close": "Close",
     "totalAssets": "Total Assets",
     "acrossCategories": "Across 9 categories",
@@ -45,7 +47,11 @@
     "infrastructure": "Infrastructure",
     "saveSuccess": "✓ Asset saved successfully!",
     "updateSuccess": "✓ Asset updated successfully!",
-    "errorSaving": "❌ Error saving asset"
+    "errorSaving": "❌ Error saving asset",
+    "deleteSuccess": "✓ Asset deleted successfully!",
+    "deleteConfirm": "Are you sure you want to delete this asset?",
+    "deleteConfirmMessage": "This action cannot be undone.",
+    "errorDeleting": "❌ Error deleting asset"
   },
   "forms": {
     "nameRequired": "Asset name is required",

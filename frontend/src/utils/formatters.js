@@ -9,9 +9,9 @@ export const formatDateTime = (date) => {
 }
 
 export const formatCurrency = (value) => {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('id-ID', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'IDR',
   }).format(value)
 }
 

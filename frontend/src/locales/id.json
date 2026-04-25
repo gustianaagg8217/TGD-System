@@ -23,7 +23,9 @@
     "financial": "Keuangan",
     "addAsset": "Tambah Aset",
     "editAsset": "Edit Aset",
+    "deleteAsset": "Hapus Aset",
     "edit": "Edit",
+    "delete": "Hapus",
     "close": "Tutup",
     "totalAssets": "Total Aset",
     "acrossCategories": "Di 9 kategori",
@@ -45,7 +47,11 @@
     "infrastructure": "Infrastruktur",
     "saveSuccess": "✓ Aset berhasil disimpan!",
     "updateSuccess": "✓ Aset berhasil diperbarui!",
-    "errorSaving": "❌ Gagal menyimpan aset"
+    "errorSaving": "❌ Gagal menyimpan aset",
+    "deleteSuccess": "✓ Aset berhasil dihapus!",
+    "deleteConfirm": "Apakah Anda yakin ingin menghapus aset ini?",
+    "deleteConfirmMessage": "Tindakan ini tidak dapat dibatalkan.",
+    "errorDeleting": "❌ Gagal menghapus aset"
   },
   "forms": {
     "nameRequired": "Nama aset harus diisi",

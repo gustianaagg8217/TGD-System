@@ -30,6 +30,8 @@ export default function DashboardEnhanced() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [autoRefresh, setAutoRefresh] = useState(true)
+  const [selectedCard, setSelectedCard] = useState(null)
+  const [showDetailModal, setShowDetailModal] = useState(false)
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -120,6 +122,23 @@ export default function DashboardEnhanced() {
           color="from-blue-500 to-blue-600"
           trend="+2 last month"
           trendUp={true}
+          onClick={() => {
+            console.log('Card clicked:', by_status)
+            setSelectedCard({
+              title: 'Total Assets',
+              value: overview?.total_assets || 0,
+              subtitle: 'Active in system',
+              trend: '+2 last month',
+              details: [
+                { label: 'Total Assets', value: overview?.total_assets || 0 },
+                { label: 'Active Assets', value: by_status?.['active'] || by_status?.active || 0 },
+                { label: 'Inactive Assets', value: by_status?.['inactive'] || by_status?.inactive || 0 },
+                { label: 'Under Maintenance', value: by_status?.['maintenance'] || by_status?.maintenance || 0 },
+                { label: 'Retired Assets', value: by_status?.['retired'] || by_status?.retired || 0 },
+              ]
+            })
+            setShowDetailModal(true)
+          }}
         />
 
         {/* Card 2: Total Value */}
@@ -131,6 +150,25 @@ export default function DashboardEnhanced() {
           color="from-purple-500 to-purple-600"
           trend="+5% YoY"
           trendUp={true}
+          onClick={() => {
+            setSelectedCard({
+              title: 'Total Asset Value',
+              value: formatCurrency(overview?.total_value || 0),
+              subtitle: 'Collective asset value',
+              trend: '+5% YoY',
+              details: [
+                { label: 'Total Value', value: formatCurrency(overview?.total_value || 0) },
+                ...Object.entries(by_type || {})
+                  .sort(([, a], [, b]) => b - a)
+                  .slice(0, 5)
+                  .map(([type, count]) => ({
+                    label: `${type} Assets`,
+                    value: count
+                  }))
+              ]
+            })
+            setShowDetailModal(true)
+          }}
         />
 
         {/* Card 3: Active Maintenance */}
@@ -142,6 +180,21 @@ export default function DashboardEnhanced() {
           color="from-yellow-500 to-yellow-600"
           trend="2 scheduled"
           trendUp={false}
+          onClick={() => {
+            setSelectedCard({
+              title: 'Active Maintenance',
+              value: totalMaintenanceTasks,
+              subtitle: 'Tasks in progress',
+              trend: '2 scheduled',
+              details: [
+                { label: 'Total Tasks', value: totalMaintenanceTasks },
+                { label: 'In Progress', value: 4 },
+                { label: 'Scheduled', value: 2 },
+                { label: 'Pending Review', value: 0 },
+              ]
+            })
+            setShowDetailModal(true)
+          }}
         />
 
         {/* Card 4: Low Stock Items */}
@@ -153,6 +206,21 @@ export default function DashboardEnhanced() {
           color="from-red-500 to-red-600"
           trend="1 critical"
           trendUp={false}
+          onClick={() => {
+            setSelectedCard({
+              title: 'Low Stock Alerts',
+              value: lowStockItems,
+              subtitle: 'Below reorder level',
+              trend: '1 critical',
+              details: [
+                { label: 'Total Alerts', value: lowStockItems },
+                { label: 'Critical Items', value: 1 },
+                { label: 'Warning Items', value: 1 },
+                { label: 'New Orders', value: 0 },
+              ]
+            })
+            setShowDetailModal(true)
+          }}
         />
       </div>
 
@@ -313,15 +381,40 @@ export default function DashboardEnhanced() {
         <StatItem label="Fleet Mileage" value="12,450" unit="km" />
         <StatItem label="Documents" value="127" unit="uploaded" />
       </div>
+
+      {/* Detail Modal */}
+      {showDetailModal && selectedCard && (
+        <DetailModal
+          card={selectedCard}
+          onClose={() => {
+            setShowDetailModal(false)
+            setSelectedCard(null)
+          }}
+        />
+      )}
     </div>
   )
 }
 
 // Sub-components
 
-function MetricCard({ icon: Icon, title, value, subtitle, color, trend, trendUp }) {
+function MetricCard({ icon: Icon, title, value, subtitle, color, trend, trendUp, onClick }) {
+  const handleClick = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    console.log('MetricCard clicked!', title)
+    if (onClick) {
+      onClick()
+    }
+  }
+
   return (
-    <div className={`bg-gradient-to-br ${color} rounded-lg shadow-lg p-6 text-white transform transition hover:scale-105`}>
+    <button
+      type="button"
+      onClick={handleClick}
+      className={`w-full bg-gradient-to-br ${color} rounded-lg shadow-lg p-6 text-white transform transition hover:scale-105 cursor-pointer border-0 text-left`}
+      style={{ pointerEvents: 'auto' }}
+    >
       <div className="flex items-start justify-between mb-4">
         <div>
           <p className="text-white/80 text-sm font-medium">{title}</p>
@@ -333,7 +426,7 @@ function MetricCard({ icon: Icon, title, value, subtitle, color, trend, trendUp 
       <div className={`text-sm font-medium flex items-center gap-1 ${trendUp ? 'text-green-100' : 'text-yellow-100'}`}>
         {trendUp ? '📈' : '📊'} {trend}
       </div>
-    </div>
+    </button>
   )
 }
 
@@ -413,6 +506,69 @@ function StatItem({ label, value, unit }) {
       <p className="text-sm text-slate-600 mb-1">{label}</p>
       <p className="text-2xl font-bold text-slate-900">{value}</p>
       <p className="text-xs text-slate-500">{unit}</p>
+    </div>
+  )
+}
+
+function DetailModal({ card, onClose }) {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+      <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-white border-b">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-3xl font-bold">{card.title}</h2>
+              <p className="text-blue-100 mt-1">{card.subtitle}</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-white hover:bg-blue-600 rounded-full p-2 transition"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-8">
+          {/* Main Value */}
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 mb-8 border border-blue-200">
+            <p className="text-gray-600 font-medium mb-2">Current Value</p>
+            <h3 className="text-5xl font-bold text-blue-600 mb-2">{card.value}</h3>
+            <p className="text-gray-600">{card.trend}</p>
+          </div>
+
+          {/* Details Grid */}
+          <div className="space-y-4">
+            <h4 className="text-lg font-bold text-gray-900 mb-4">Breakdown</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {card.details.map((detail, idx) => (
+                <div key={idx} className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-blue-300 transition">
+                  <p className="text-sm text-gray-600 font-medium mb-2">{detail.label}</p>
+                  <p className="text-2xl font-bold text-gray-900">{detail.value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Footer Actions */}
+          <div className="mt-8 pt-6 border-t flex gap-3 justify-end">
+            <button
+              onClick={onClose}
+              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition"
+            >
+              Close
+            </button>
+            <button
+              onClick={onClose}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition"
+            >
+              View Details
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
