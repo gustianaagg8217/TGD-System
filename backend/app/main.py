@@ -11,7 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from .api.routes import auth, assets, dashboard, sensors_iot, roles, websocket, users
+from .api.routes import auth, assets, dashboard, sensors_iot, roles, websocket, users, maintenance
 from .config import get_settings
 from .core.exceptions import AppException
 from .db.session import engine, SessionLocal, get_db
@@ -107,6 +107,12 @@ def create_app() -> FastAPI:
         assets.router,
         prefix=f"{settings.api_v1_str}/assets",
         tags=["Assets"],
+    )
+
+    app.include_router(
+        maintenance.router,
+        prefix=f"{settings.api_v1_str}/maintenance-logs",
+        tags=["Maintenance"],
     )
 
     app.include_router(
